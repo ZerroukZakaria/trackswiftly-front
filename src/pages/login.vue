@@ -57,6 +57,7 @@ const login = async () => {
       },
     })
 
+
     const { accessToken, userData, userAbilityRules } = res
 
     useCookie('userAbilityRules').value = userAbilityRules
@@ -82,6 +83,32 @@ const onSubmit = () => {
       if (isValid)
         login()
     })
+}
+
+
+const loginWithKeycloak = async () => {
+  try {
+        // Initialize Keycloak
+        const authenticated = await keycloak.init({ onLoad: 'login-required' });
+
+        if (authenticated) {
+          console.log('User is authenticated');
+          console.log('Keycloak token:', keycloak.token);
+          console.log('User profile:', keycloak.idTokenParsed);
+
+          // Store Keycloak token and user info in localStorage
+          localStorage.setItem('keycloakToken', keycloak.token || '');
+          localStorage.setItem('keycloakUser', JSON.stringify(keycloak.idTokenParsed));
+
+          // Redirect to the dashboard or home page
+          this.$router.push('/');
+        } else {
+          console.error('User is not authenticated');
+        }
+      } catch (error) {
+        console.error('Keycloak initialization failed:', error);
+      }
+
 }
 </script>
 
@@ -193,9 +220,9 @@ const onSubmit = () => {
 
                 <VBtn
                   block
-                  type="submit"
+                  @click = "loginWithKeycloak"
                 >
-                  Login
+                  KeyCock Login
                 </VBtn>
               </VCol>
 

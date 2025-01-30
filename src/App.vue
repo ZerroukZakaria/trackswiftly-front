@@ -13,6 +13,11 @@ initCore()
 initConfigStore()
 
 const configStore = useConfigStore()
+
+
+
+
+
 </script>
 
 <template>
