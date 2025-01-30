@@ -11,6 +11,7 @@ import authV2MaskDark from '@images/pages/misc-mask-dark.png'
 import authV2MaskLight from '@images/pages/misc-mask-light.png'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 import { themeConfig } from '@themeConfig'
+import keycloak from '@/services/keycloak'
 
 const authThemeImg = useGenerateImageVariant(authV2LoginIllustrationLight, authV2LoginIllustrationDark, authV2LoginIllustrationBorderedLight, authV2LoginIllustrationBorderedDark, true)
 
@@ -88,28 +89,69 @@ const onSubmit = () => {
 
 const loginWithKeycloak = async () => {
   try {
-        // Initialize Keycloak
-        const authenticated = await keycloak.init({ onLoad: 'login-required' });
+    const authenticated = await keycloak.init({
+      onLoad: 'login-required',
+    });
 
-        if (authenticated) {
-          console.log('User is authenticated');
-          console.log('Keycloak token:', keycloak.token);
-          console.log('User profile:', keycloak.idTokenParsed);
+    if (authenticated) {
+      console.log('User is authenticated');
 
-          // Store Keycloak token and user info in localStorage
-          localStorage.setItem('keycloakToken', keycloak.token || '');
-          localStorage.setItem('keycloakUser', JSON.stringify(keycloak.idTokenParsed));
 
-          // Redirect to the dashboard or home page
-          this.$router.push('/');
-        } else {
-          console.error('User is not authenticated');
-        }
-      } catch (error) {
-        console.error('Keycloak initialization failed:', error);
-      }
 
-}
+      // Rest of your authentication logic...
+    } else {
+      // If not authenticated, explicitly start login
+      await keycloak.login({
+        redirectUri: 'http://localhost:5173/',
+        prompt: 'login',
+        scope: 'openid',
+        openInNewWindow: true  
+      });
+
+
+      const res = await $api('/auth/login', {
+      method: 'POST',
+      body: {
+        email: credentials.value.email,
+        password: credentials.value.password,
+      },
+      onResponseError({ response }) {
+        errors.value = response._data.errors
+      },
+    })
+
+
+    const { accessToken, userData, userAbilityRules } = res
+
+    useCookie('userAbilityRules').value = userAbilityRules
+    ability.update(userAbilityRules)
+
+    useCookie('userData').value = userData
+    useCookie('accessToken').value = accessToken
+
+    // Redirect to `to` query if exist or redirect to index route
+    // ❗ nextTick is required to wait for DOM updates and later redirect
+    await nextTick(() => {
+      router.replace(route.query.to ? String(route.query.to) : '/')
+    })
+    }
+    
+  } catch (error) {
+    console.error('Keycloak initialization failed:', error);
+    // Add more detailed error logging
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+  }
+};
+
+const mapKeycloakRolesToAbilities = (roles: string[]) => {
+  return roles.map(role => ({
+    action: 'read',
+    subject: role.toLowerCase()
+  }));
+};
 </script>
 
 <template>
