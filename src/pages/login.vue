@@ -11,7 +11,9 @@ import authV2MaskDark from '@images/pages/misc-mask-dark.png'
 import authV2MaskLight from '@images/pages/misc-mask-light.png'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 import { themeConfig } from '@themeConfig'
-import keycloak from '@/services/keycloak'
+import {keycloak, removeTokens} from '@/services/keycloak'
+
+
 
 const authThemeImg = useGenerateImageVariant(authV2LoginIllustrationLight, authV2LoginIllustrationDark, authV2LoginIllustrationBorderedLight, authV2LoginIllustrationBorderedDark, true)
 
@@ -87,71 +89,33 @@ const onSubmit = () => {
 }
 
 
-const loginWithKeycloak = async () => {
+const logoutFromKeycloak = async () => {
   try {
-    const authenticated = await keycloak.init({
-      onLoad: 'login-required',
+    removeTokens();
+    await keycloak.logout({
+      redirectUri: window.location.origin + '/login',
     });
 
-    if (authenticated) {
-      console.log('User is authenticated');
-
-
-
-      // Rest of your authentication logic...
-    } else {
-      // If not authenticated, explicitly start login
-      await keycloak.login({
-        redirectUri: 'http://localhost:5173/',
-        prompt: 'login',
-        scope: 'openid',
-        openInNewWindow: true  
-      });
-
-
-      const res = await $api('/auth/login', {
-      method: 'POST',
-      body: {
-        email: credentials.value.email,
-        password: credentials.value.password,
-      },
-      onResponseError({ response }) {
-        errors.value = response._data.errors
-      },
-    })
-
-
-    const { accessToken, userData, userAbilityRules } = res
-
-    useCookie('userAbilityRules').value = userAbilityRules
-    ability.update(userAbilityRules)
-
-    useCookie('userData').value = userData
-    useCookie('accessToken').value = accessToken
-
-    // Redirect to `to` query if exist or redirect to index route
-    // ❗ nextTick is required to wait for DOM updates and later redirect
-    await nextTick(() => {
-      router.replace(route.query.to ? String(route.query.to) : '/')
-    })
-    }
-    
+    console.log("Logged out successfully");
   } catch (error) {
-    console.error('Keycloak initialization failed:', error);
-    // Add more detailed error logging
-    if (error instanceof Error) {
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
-    }
+    console.error("Error during logout:", error);
   }
 };
 
-const mapKeycloakRolesToAbilities = (roles: string[]) => {
-  return roles.map(role => ({
-    action: 'read',
-    subject: role.toLowerCase()
-  }));
+const loginWithKeycloak = async () => {
+  try {
+    await keycloak.login({
+      redirectUri: window.location.origin,
+      prompt: 'login',
+      scope: 'openid',
+    });
+
+  } catch (error) {
+    console.error('Keycloak login failed:', error);
+  }
 };
+
+
 </script>
 
 <template>
@@ -265,6 +229,13 @@ const mapKeycloakRolesToAbilities = (roles: string[]) => {
                   @click = "loginWithKeycloak"
                 >
                   KeyCock Login
+                </VBtn>
+
+                <VBtn
+                  block
+                  @click = "logoutFromKeycloak"
+                >
+                  KeyCock Logout
                 </VBtn>
               </VCol>
 

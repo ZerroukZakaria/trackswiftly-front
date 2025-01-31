@@ -1,18 +1,36 @@
+// main.ts
 import { createApp } from 'vue'
-
 import App from '@/App.vue'
 import { registerPlugins } from '@core/utils/plugins'
+import { keycloak, storeTokens, refreshTokenIfNeeded } from './services/keycloak'
 
 // Styles
 import '@core/scss/template/index.scss'
 import '@styles/styles.scss'
 
-// Create vue app
+// Create Vue app
 const app = createApp(App)
-
 
 // Register plugins
 registerPlugins(app)
 
-// Mount vue app
-app.mount('#app')
+// Initialize Keycloak
+keycloak.init({
+  onLoad: 'check-sso',  
+  checkLoginIframe: false, 
+}).then(authenticated => {
+  if (authenticated) {
+    refreshTokenIfNeeded(); 
+
+    console.log('User is authenticated');
+
+    setInterval(refreshTokenIfNeeded, 60000); 
+  } else {
+    console.log('User is not authenticated');
+  }
+
+  app.config.globalProperties.$keycloak = keycloak;
+  app.mount('#app');
+}).catch(error => {
+  console.error('Keycloak initialization failed:', error);
+});
