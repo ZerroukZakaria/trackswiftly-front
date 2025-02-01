@@ -3,14 +3,14 @@ export default [
     title: 'Dashboards',
     icon: { icon: 'tabler-smart-home' },
     children: [
-      {
-        title: 'Analytics',
-        to: 'dashboards-analytics',
-      },
       // {
-      //   title: 'CRM',
-      //   to: 'dashboards-crm',
+      //   title: 'Analytics',
+      //   to: 'dashboards-analytics',
       // },
+      {
+        title: 'CRM',
+        to: 'dashboards-crm',
+      },
       // {
       //   title: 'Ecommerce',
       //   to: 'dashboards-ecommerce',

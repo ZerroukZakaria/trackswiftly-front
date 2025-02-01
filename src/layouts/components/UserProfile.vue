@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
+import {keycloak, removeTokens} from '@/services/keycloak'
+
+
 
 const router = useRouter()
 const ability = useAbility()
@@ -8,6 +11,8 @@ const ability = useAbility()
 const userData = useCookie<any>('userData')
 
 const logout = async () => {
+
+  logoutFromKeycloak()
   // Remove "accessToken" from cookie
   useCookie('accessToken').value = null
 
@@ -24,6 +29,20 @@ const logout = async () => {
   // Reset ability to initial ability
   ability.update([])
 }
+
+const logoutFromKeycloak = async () => {
+  try {
+    removeTokens();
+    await keycloak.logout({
+      redirectUri: window.location.origin + '/login',
+    });
+
+    console.log("Logged out successfully");
+  } catch (error) {
+    console.error("Error during logout:", error);
+  }
+};
+
 
 const userProfileList = [
   { type: 'divider' },

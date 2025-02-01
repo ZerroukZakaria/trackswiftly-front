@@ -11,7 +11,7 @@ import authV2MaskDark from '@images/pages/misc-mask-dark.png'
 import authV2MaskLight from '@images/pages/misc-mask-light.png'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 import { themeConfig } from '@themeConfig'
-import {keycloak, removeTokens} from '@/services/keycloak'
+import {keycloak} from '@/services/keycloak'
 
 
 
@@ -84,25 +84,15 @@ const onSubmit = () => {
   refVForm.value?.validate()
     .then(({ valid: isValid }) => {
       if (isValid)
-        login()
+      loginWithKeycloakOld()
+      login()
+      
     })
 }
 
 
-const logoutFromKeycloak = async () => {
-  try {
-    removeTokens();
-    await keycloak.logout({
-      redirectUri: window.location.origin + '/login',
-    });
 
-    console.log("Logged out successfully");
-  } catch (error) {
-    console.error("Error during logout:", error);
-  }
-};
-
-const loginWithKeycloak = async () => {
+const loginWithKeycloakOld = async () => {
   try {
     await keycloak.login({
       redirectUri: window.location.origin,
@@ -114,6 +104,51 @@ const loginWithKeycloak = async () => {
     console.error('Keycloak login failed:', error);
   }
 };
+
+const loginWithKeycloak = async () => {
+  try {
+    // Generate the login URL manually
+    const loginUrl = keycloak.createLoginUrl({
+      redirectUri: window.location.origin, // Ensure it's correctly set in Keycloak
+      prompt: 'login', // Forces login prompt
+      scope: 'openid',
+    });
+
+    // Open login in a new tab or pop-up
+    const loginWindow = window.open(loginUrl, '_blank', 'width=500,height=600');
+
+    // Handle case where pop-ups are blocked
+    if (!loginWindow) {
+      console.error('Failed to open login window. Please allow pop-ups.');
+      return;
+    }
+
+    // Poll to check if the login window was closed
+    const checkInterval = setInterval(async () => {
+      if (loginWindow.closed) {
+        clearInterval(checkInterval);
+        console.log('Login window closed. Checking authentication...');
+
+        // Instead of calling init(), refresh the token
+        keycloak.updateToken(5).then((refreshed) => {
+          if (refreshed) {
+            console.log('Token refreshed successfully!');
+          } else {
+            console.log('Token not refreshed, user may not be authenticated.');
+          }
+          // Store tokens in localStorage
+          localStorage.setItem('access_token', keycloak.token);
+          localStorage.setItem('refresh_token', keycloak.refreshToken);
+        }).catch(error => {
+          console.error('Failed to refresh token:', error);
+        });
+      }
+    }, 1000);
+  } catch (error) {
+    console.error('Keycloak login failed:', error);
+  }
+};
+
 
 
 </script>
@@ -226,17 +261,13 @@ const loginWithKeycloak = async () => {
 
                 <VBtn
                   block
-                  @click = "loginWithKeycloak"
+                  type="submit"
                 >
-                  KeyCock Login
+                <span><i class="tabler-user-circle"></i></span>
+
+                  Login
                 </VBtn>
 
-                <VBtn
-                  block
-                  @click = "logoutFromKeycloak"
-                >
-                  KeyCock Logout
-                </VBtn>
               </VCol>
 
               <!-- create account -->
