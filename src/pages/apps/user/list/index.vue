@@ -2,6 +2,7 @@
 import { VDataTableServer } from 'vuetify/labs/VDataTable'
 
 import AddNewUserDrawer from '@/views/apps/user/list/AddNewUserDrawer.vue'
+import EditUserRoleModal from '@/views/apps/user/list/EditUserRoleModal.vue'
 import { paginationMeta } from '@api-utils/paginationMeta'
 import type { UserProperties } from '@db/apps/users/types'
 
@@ -28,9 +29,9 @@ const updateOptions = (options: any) => {
 const headers = [
   { title: 'User', key: 'user' },
   { title: 'Role', key: 'role' },
-  { title: 'Plan', key: 'plan' },
-  { title: 'Billing', key: 'billing' },
-  { title: 'Status', key: 'status' },
+  // { title: 'Plan', key: 'plan' },
+  // { title: 'Billing', key: 'billing' },
+  // { title: 'Status', key: 'status' },
   { title: 'Actions', key: 'actions', sortable: false },
 ]
 
@@ -48,6 +49,7 @@ const { data: usersData, execute: fetchUsers } = await useApi<any>(createUrl('/a
   },
 }))
 
+
 const users = computed(() => usersData.value.users)
 const totalUsers = computed(() => usersData.value.totalUsers)
 
@@ -56,8 +58,8 @@ const roles = [
   { title: 'Admin', value: 'admin' },
   { title: 'Manager', value: 'manager' },
   { title: 'Driver', value: 'driver' },
-  { title: 'Maintainer', value: 'maintainer' },
-  { title: 'Subscriber', value: 'subscriber' },
+  // { title: 'Maintainer', value: 'maintainer' },
+  // { title: 'Subscriber', value: 'subscriber' },
 ]
 
 const plans = [
@@ -103,6 +105,8 @@ const resolveUserStatusVariant = (stat: string) => {
 }
 
 const isAddNewUserDrawerVisible = ref(false)
+const isEditUserRoleModalVisbile = ref(false)
+
 
 // 👉 Add new user
 const addNewUser = async (userData: UserProperties) => {
@@ -121,23 +125,42 @@ const deleteUser = async (id: number) => {
     method: 'DELETE',
   })
 
+
   // refetch User
   // TODO: Make this async
   fetchUsers()
 }
 
-const widgetData = ref([
-  { title: 'Session', value: '21,459', change: 29, desc: 'Total Users', icon: 'tabler-user', iconColor: 'primary' },
-  { title: 'Paid Users', value: '4,567', change: 18, desc: 'Last Week Analytics', icon: 'tabler-user-plus', iconColor: 'error' },
-  { title: 'Active Users', value: '19,860', change: -14, desc: 'Last Week Analytics', icon: 'tabler-user-check', iconColor: 'success' },
-  { title: 'Pending Users', value: '237', change: 42, desc: 'Last Week Analytics', icon: 'tabler-user-exclamation', iconColor: 'warning' },
-])
+
+// 👉 Edit User Role
+const updateUserRole = (userData: {id: number,  role: string}) => {
+  console.log(userData)
+    
+}
+
+
+// 👉 Invite User
+const isDialogVisible = ref(false)
+const email = ref('')
+
+const inviteUser = () => {
+  console.log(email.value)
+  //put the invite api here
+  isDialogVisible.value = false
+}
+
+// const widgetData = ref([
+//   { title: 'Session', value: '21,459', change: 29, desc: 'Total Users', icon: 'tabler-user', iconColor: 'primary' },
+//   { title: 'Paid Users', value: '4,567', change: 18, desc: 'Last Week Analytics', icon: 'tabler-user-plus', iconColor: 'error' },
+//   { title: 'Active Users', value: '19,860', change: -14, desc: 'Last Week Analytics', icon: 'tabler-user-check', iconColor: 'success' },
+//   { title: 'Pending Users', value: '237', change: 42, desc: 'Last Week Analytics', icon: 'tabler-user-exclamation', iconColor: 'warning' },
+// ])
 </script>
 
 <template>
   <section>
     <!-- 👉 Widgets -->
-    <div class="d-flex mb-6">
+    <!-- <div class="d-flex mb-6">
       <VRow>
         <template
           v-for="(data, id) in widgetData"
@@ -181,7 +204,51 @@ const widgetData = ref([
           </VCol>
         </template>
       </VRow>
-    </div>
+    </div> -->
+
+
+
+    <!-- 👉 Invite User Modal -->
+
+    <VDialog
+    v-model="isDialogVisible"
+    max-width="600"
+    >
+    <!-- Dilog close btn -->
+    <DialogCloseBtn @click="isDialogVisible = !isDialogVisible" />
+
+    <!-- Dialog Content -->
+    <VCard title="Invite User">
+      <VCardText>
+        <VRow>
+          <VCol cols="12">
+            <AppTextField
+              label="Email"
+              v-model="email"
+              prepend-inner-icon="tabler-mail"
+              :rules="[requiredValidator, emailValidator]"
+              placeholder="johndoe@email.com"
+            />
+          </VCol>
+        </VRow>
+      </VCardText>
+
+      <VCardText class="d-flex justify-end flex-wrap gap-3">
+        <VBtn
+          variant="tonal"
+          color="secondary"
+          @click="isDialogVisible = false"
+        >
+          Close
+        </VBtn>
+        <VBtn @click="inviteUser">
+          Invite
+        </VBtn>
+      </VCardText>
+    </VCard>
+    </VDialog>
+
+
 
     <VCard
       title="Filters"
@@ -192,7 +259,7 @@ const widgetData = ref([
           <!-- 👉 Select Role -->
           <VCol
             cols="12"
-            sm="4"
+            sm="12"
           >
             <AppSelect
               v-model="selectedRole"
@@ -204,7 +271,7 @@ const widgetData = ref([
             />
           </VCol>
           <!-- 👉 Select Plan -->
-          <VCol
+          <!-- <VCol
             cols="12"
             sm="4"
           >
@@ -216,11 +283,11 @@ const widgetData = ref([
               clearable
               clear-icon="tabler-x"
             />
-          </VCol>
+          </VCol> -->
           <!-- 👉 Select Status -->
-          <VCol
+          <!-- <VCol
             cols="12"
-            sm="4"
+            sm="6"
           >
             <AppSelect
               v-model="selectedStatus"
@@ -230,7 +297,7 @@ const widgetData = ref([
               clearable
               clear-icon="tabler-x"
             />
-          </VCol>
+          </VCol> -->
         </VRow>
       </VCardText>
     </VCard>
@@ -272,9 +339,17 @@ const widgetData = ref([
           </VBtn> -->
 
           <!-- 👉 Add user button -->
-          <VBtn
+          <!-- <VBtn
             prepend-icon="tabler-mail-share"
             @click="isAddNewUserDrawerVisible = true"
+          >
+            Invite Users
+          </VBtn> -->
+
+          <!-- 👉 Invite user button -->
+          <VBtn
+            prepend-icon="tabler-mail-share"
+            @click="isDialogVisible = true"
           >
             Invite Users
           </VBtn>
@@ -358,15 +433,20 @@ const widgetData = ref([
 
         <!-- Actions -->
         <template #item.actions="{ item }">
+
+          <!-- edit user role -->
+          <IconBtn @click="isEditUserRoleModalVisbile = true">
+            <VIcon icon="tabler-user-shield" />
+          </IconBtn>
+
+
+          <!-- delete user  -->
           <IconBtn @click="deleteUser(item.id)">
             <VIcon icon="tabler-trash" />
           </IconBtn>
 
-          <IconBtn>
-            <VIcon icon="tabler-edit" />
-          </IconBtn>
-
-          <VBtn
+          <!-- 3 dots menu -->
+          <!-- <VBtn
             icon
             variant="text"
             size="small"
@@ -401,7 +481,7 @@ const widgetData = ref([
                 </VListItem>
               </VList>
             </VMenu>
-          </VBtn>
+          </VBtn> -->
         </template>
 
         <!-- pagination -->
@@ -449,5 +529,17 @@ const widgetData = ref([
       v-model:isDrawerOpen="isAddNewUserDrawerVisible"
       @user-data="addNewUser"
     />
+
+    <EditUserRoleModal
+    v-model:isDrawerOpen="isEditUserRoleModalVisbile"
+    />
+
+    <!-- 👉 Edit User Role -->
+     <EditUserRoleModal
+      v-model:isDrawerOpen="isEditUserRoleModalVisbile"
+      @user-data="updateUserRole"
+
+     />
+
   </section>
 </template>

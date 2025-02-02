@@ -54,7 +54,7 @@ watch([isFallbackStateActive, refLoadingIndicator], () => {
           :languages="themeConfig.app.i18n.langConfig"
         />
         <NavbarThemeSwitcher />
-        <NavbarShortcuts />
+        <!-- <NavbarShortcuts /> -->
         <NavBarNotifications class="me-2" />
         <UserProfile />
       </div>

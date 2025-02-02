@@ -45,6 +45,8 @@ const credentials = ref({
   password: 'admin',
 })
 
+const isHidden = ref(true) // Set to `true` to hide, `false` to show
+
 const rememberMe = ref(false)
 
 const login = async () => {
@@ -105,7 +107,7 @@ const loginWithKeycloakOld = async () => {
   }
 };
 
-const loginWithKeycloak = async () => {
+const loginWithKeycloakNewWindow = async () => {
   try {
     // Generate the login URL manually
     const loginUrl = keycloak.createLoginUrl({
@@ -195,13 +197,14 @@ const loginWithKeycloak = async () => {
           />
 
           <h4 class="text-h4 mb-1">
-            Welcome to <span class="text-capitalize"> {{ themeConfig.app.title }} </span>! 👋🏻
+            Welcome to <span class="text-capitalize"> {{ themeConfig.app.title }} </span>! 🚙
           </h4>
           <p class="mb-0">
             Please sign-in to your account and start the adventure
           </p>
         </VCardText>
-        <VCardText>
+
+        <!-- <VCardText>
           <VAlert
             color="primary"
             variant="tonal"
@@ -213,7 +216,7 @@ const loginWithKeycloak = async () => {
               Client Email: <strong>client@demo.com</strong> / Pass: <strong>client</strong>
             </p>
           </VAlert>
-        </VCardText>
+        </VCardText> -->
         <VCardText>
           <VForm
             ref="refVForm"
@@ -221,7 +224,7 @@ const loginWithKeycloak = async () => {
           >
             <VRow>
               <!-- email -->
-              <VCol cols="12">
+              <VCol v-show="!isHidden" cols="12">
                 <AppTextField
                   v-model="credentials.email"
                   label="Email"
@@ -234,8 +237,8 @@ const loginWithKeycloak = async () => {
               </VCol>
 
               <!-- password -->
-              <VCol cols="12">
-                <AppTextField
+              <VCol  v-show="!isHidden" cols="12 ">
+                <AppTextField class="mb-4"
                   v-model="credentials.password"
                   label="Password"
                   placeholder="············"
@@ -246,7 +249,7 @@ const loginWithKeycloak = async () => {
                   @click:append-inner="isPasswordVisible = !isPasswordVisible"
                 />
 
-                <div class="d-flex align-center flex-wrap justify-space-between mt-1 mb-4">
+                <!-- <div class="d-flex align-center flex-wrap justify-space-between mt-1 mb-4">
                   <VCheckbox
                     v-model="rememberMe"
                     label="Remember me"
@@ -257,21 +260,21 @@ const loginWithKeycloak = async () => {
                   >
                     Forgot Password?
                   </RouterLink>
-                </div>
-
-                <VBtn
-                  block
-                  type="submit"
-                >
-                <span><i class="tabler-user-circle"></i></span>
-
-                  Login
-                </VBtn>
+                </div> -->
 
               </VCol>
 
+              <VCol cols="12">
+                <VBtn block type="submit">
+                  <VIcon size="30" class="me-1">tabler-user-circle</VIcon>
+                    Login
+              </VBtn>
+              </VCol>
+            
+
+
               <!-- create account -->
-              <VCol
+              <!-- <VCol
                 cols="12"
                 class="text-center"
               >
@@ -282,23 +285,23 @@ const loginWithKeycloak = async () => {
                 >
                   Create an account
                 </RouterLink>
-              </VCol>
-              <VCol
+              </VCol> -->
+              <!-- <VCol
                 cols="12"
                 class="d-flex align-center"
               >
                 <VDivider />
                 <span class="mx-4">or</span>
                 <VDivider />
-              </VCol>
+              </VCol> -->
 
               <!-- auth providers -->
-              <VCol
+              <!-- <VCol
                 cols="12"
                 class="text-center"
               >
                 <AuthProvider />
-              </VCol>
+              </VCol> -->
             </VRow>
           </VForm>
         </VCardText>
