@@ -13,7 +13,7 @@ interface KeycloakConfig {
 // Initialize Keycloak instance
 const keycloakConfig: KeycloakConfig = {
   url: 'https://authserver.obayd.online', // Keycloak server URL
-  realm: 'TrackingSwiftlyRealm', // Your realm name
+  realm: 'TrackSwiftlyRealm', // Your realm name
   clientId: 'track-swiftly', // Your client ID
   redirectUri: window.location.origin,
   checkLoginIframe: false, // Add this
@@ -37,14 +37,26 @@ const removeTokens = () => {
 
 const refreshTokenIfNeeded = async () => {
   try {
-    const minValidity = 5;
-    const isTokenValid = await keycloak.updateToken(minValidity);
+    const exp = keycloak.tokenParsed?.exp;
+    const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
 
-    if (isTokenValid) {
-      console.log('Token refreshed');
-      storeTokens(); // Store the new token
+    const timeLeft = exp - currentTime;
+    const refreshThreshold = 5;
+
+    if (timeLeft <= refreshThreshold) {
+      const minValidity = 5;
+      const isTokenValid = await keycloak.updateToken(minValidity);
+
+      if (isTokenValid) {
+        console.log('Token refreshed');
+        storeTokens();
+      } else {
+        console.log('Token is valid, no need to refresh');
+      }
     } else {
-      console.log('Token is valid, no need to refresh');
+      console.log(`Token is valid. ${timeLeft} seconds left.`);
+      // Schedule next refresh closer to token expiration
+      setTimeout(refreshTokenIfNeeded, (timeLeft - refreshThreshold) * 1000);
     }
   } catch (error) {
     console.error('Error refreshing token:', error);
@@ -52,7 +64,4 @@ const refreshTokenIfNeeded = async () => {
 };
 
 
-
-
-setInterval(refreshTokenIfNeeded, 60000); 
 export { keycloak, refreshTokenIfNeeded, storeTokens, removeTokens };

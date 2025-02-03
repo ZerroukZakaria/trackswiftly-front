@@ -3,7 +3,6 @@ import { createApp } from 'vue'
 import App from '@/App.vue'
 import { registerPlugins } from '@core/utils/plugins'
 import { keycloak, storeTokens, refreshTokenIfNeeded } from './services/keycloak'
-
 // Styles
 import '@core/scss/template/index.scss'
 import '@styles/styles.scss'
@@ -20,17 +19,18 @@ keycloak.init({
   checkLoginIframe: false, 
 }).then(authenticated => {
   if (authenticated) {
-    refreshTokenIfNeeded(); 
-
+    storeTokens();
+    
     console.log('User is authenticated');
-
-    setInterval(refreshTokenIfNeeded, 60000); 
+    refreshTokenIfNeeded(); 
+    
   } else {
     console.log('User is not authenticated');
   }
 
   app.config.globalProperties.$keycloak = keycloak;
   app.mount('#app');
+  
 }).catch(error => {
   console.error('Keycloak initialization failed:', error);
 });
