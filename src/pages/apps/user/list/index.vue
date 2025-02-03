@@ -5,6 +5,9 @@ import AddNewUserDrawer from '@/views/apps/user/list/AddNewUserDrawer.vue'
 import EditUserRoleModal from '@/views/apps/user/list/EditUserRoleModal.vue'
 import { paginationMeta } from '@api-utils/paginationMeta'
 import type { UserProperties } from '@db/apps/users/types'
+import axios from 'axios'
+import api from '@/utils/axios'
+import { keycloak } from '@/services/keycloak'
 
 // 👉 Store
 const searchQuery = ref('')
@@ -131,23 +134,44 @@ const deleteUser = async (id: number) => {
   fetchUsers()
 }
 
+const exp = keycloak.tokenParsed?.exp;
+const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+
+const timeLeft = exp - currentTime;
 
 // 👉 Edit User Role
 const updateUserRole = (userData: {id: number,  role: string}) => {
   console.log(userData)
     
 }
-
-
 // 👉 Invite User
 const isDialogVisible = ref(false)
 const email = ref('')
 
-const inviteUser = () => {
-  console.log(email.value)
-  //put the invite api here
-  isDialogVisible.value = false
-}
+const inviteUser = async () => {
+  if (!email.value) {
+    console.error("Email is required");
+    return;
+  }
+  try {
+    const response = await api.post(
+      '/users-services/invite-user',
+      { email: email.value },
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'Accept': '*/*'
+        }
+      }
+    );
+
+    console.log("User invited successfully:", response.data);
+    isDialogVisible.value = false; 
+  } catch (error) {
+    console.error("Error inviting user:", error.response?.data || error.message);
+  }
+};
+
 
 // const widgetData = ref([
 //   { title: 'Session', value: '21,459', change: 29, desc: 'Total Users', icon: 'tabler-user', iconColor: 'primary' },

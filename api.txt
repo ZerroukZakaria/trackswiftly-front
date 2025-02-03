@@ -1,0 +1,2 @@
+inviteUserm= https://authserver.obayd.online/realms/TrackingSwiftlyRealm/users-services/invite-user , body: email, authorization: bearer token, content type: application/json or application/x-www-form-urlencoded
+

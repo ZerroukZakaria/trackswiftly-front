@@ -45,6 +45,7 @@ const credentials = ref({
   password: 'admin',
 })
 
+
 const isHidden = ref(true) // Set to `true` to hide, `false` to show
 
 const rememberMe = ref(false)
@@ -106,6 +107,8 @@ const loginWithKeycloakOld = async () => {
     console.error('Keycloak login failed:', error);
   }
 };
+
+
 
 const loginWithKeycloakNewWindow = async () => {
   try {
