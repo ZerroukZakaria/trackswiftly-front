@@ -103,6 +103,7 @@ const loginWithKeycloakOld = async () => {
       scope: 'openid',
     });
 
+    
   } catch (error) {
     console.error('Keycloak login failed:', error);
   }

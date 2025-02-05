@@ -2,12 +2,9 @@
 import { VDataTableServer } from 'vuetify/labs/VDataTable'
 
 import AddNewUserDrawer from '@/views/apps/user/list/AddNewUserDrawer.vue'
-import EditUserRoleModal from '@/views/apps/user/list/EditUserRoleModal.vue'
 import { paginationMeta } from '@api-utils/paginationMeta'
 import type { UserProperties } from '@db/apps/users/types'
-import axios from 'axios'
 import api from '@/utils/axios'
-import { keycloak } from '@/services/keycloak'
 
 // 👉 Store
 const searchQuery = ref('')
@@ -152,23 +149,20 @@ const updateUserRole = (userData: {id: number,  role: string}) => {
 // 👉 Get users
 const getUsers = async () => {
   try {
-    const response = await api.get(
-      'users-services/users',
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        }
+    const response = await api.get('/users-services/users', {
+      headers: {
+        'Accept': 'application/json', // Safe standard header
       }
-    )
-    console.log("User fetched successfully:", response.data);
-
-
-
-  } catch(error) {
+    });
+    console.log("Users fetched successfully:", response.data);
+  } catch (error) {
     console.error("Error fetching users:", error.response?.data || error.message);
-
   }
-}
+};
+
+
+
+
 
 getUsers();
 

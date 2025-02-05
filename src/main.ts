@@ -16,7 +16,8 @@ registerPlugins(app)
 // Initialize Keycloak
 keycloak.init({
   onLoad: 'check-sso',  
-  checkLoginIframe: false, 
+  checkLoginIframe: true, 
+  pkceMethod: 'S256', // Recommended for security
 }).then(authenticated => {
   if (authenticated) {
     storeTokens();
