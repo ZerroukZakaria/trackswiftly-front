@@ -38,9 +38,10 @@ const removeTokens = () => {
 const refreshTokenIfNeeded = async () => {
   try {
     const exp = keycloak.tokenParsed?.exp;
-    const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+    const currentTime = Math.floor(Date.now() / 1000); 
 
-    const timeLeft = exp - currentTime;
+    const offset = 40; 
+    const timeLeft = exp - currentTime - offset;
     const refreshThreshold = 5;
 
     if (timeLeft <= refreshThreshold) {
