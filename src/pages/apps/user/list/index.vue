@@ -30,12 +30,13 @@ const updateOptions = (options: any) => {
 
 // Headers
 const headers = [
-  { title: 'User', key: 'user' },
-  { title: 'Role', key: 'role' },
+  { title: 'Name', key: 'user' },
+  { title: 'Email', key: 'email' },
+  // { title: 'Role', key: 'role' },
+  { title: 'Status', key: 'status' },
+  { title: 'Actions', key: 'actions', sortable: false },
   // { title: 'Plan', key: 'plan' },
   // { title: 'Billing', key: 'billing' },
-  // { title: 'Status', key: 'status' },
-  { title: 'Actions', key: 'actions', sortable: false },
 ]
 
 // 👉 Fetching users
@@ -58,11 +59,10 @@ const totalUsers = computed(() => usersData.value.totalUsers)
 
 // 👉 search filters
 const roles = [
-  { title: 'Admin', value: 'admin' },
-  { title: 'Manager', value: 'manager' },
-  { title: 'Driver', value: 'driver' },
-  // { title: 'Maintainer', value: 'maintainer' },
-  // { title: 'Subscriber', value: 'subscriber' },
+  { title: 'Manager', value: 'manager', icon: 'tabler-user' },
+  { title: 'Driver', value: 'driver', icon: 'tabler-user' },
+  { title: 'Dispatcher', value: 'dispatcher', icon: 'tabler-user' },
+
 ]
 
 const plans = [
@@ -108,7 +108,6 @@ const resolveUserStatusVariant = (stat: string) => {
 }
 
 const isAddNewUserDrawerVisible = ref(false)
-const isEditUserRoleModalVisbile = ref(false)
 
 
 // 👉 Add new user
@@ -134,20 +133,48 @@ const deleteUser = async (id: number) => {
   fetchUsers()
 }
 
-const exp = keycloak.tokenParsed?.exp;
-const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+const isRoleDialogVisible = ref(false)
+const selectedUserId = ref(null)
 
-const timeLeft = exp - currentTime;
+const openRoleDialog = (user) => {
+  console.log(user.role)
+  selectedUserId.value = user.id
+  selectedRole.value = user.role 
+  isRoleDialogVisible.value = true
+}
 
 // 👉 Edit User Role
 const updateUserRole = (userData: {id: number,  role: string}) => {
-  console.log(userData)
+  isRoleDialogVisible.value = false
     
 }
+
+// 👉 Get users
+const getUsers = async () => {
+  try {
+    const response = await api.get(
+      'users-services/users',
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }
+      }
+    )
+    console.log("User fetched successfully:", response.data);
+
+
+
+  } catch(error) {
+    console.error("Error fetching users:", error.response?.data || error.message);
+
+  }
+}
+
+getUsers();
+
 // 👉 Invite User
 const isDialogVisible = ref(false)
 const email = ref('')
-
 const inviteUser = async () => {
   if (!email.value) {
     console.error("Email is required");
@@ -172,68 +199,52 @@ const inviteUser = async () => {
   }
 };
 
-
-// const widgetData = ref([
-//   { title: 'Session', value: '21,459', change: 29, desc: 'Total Users', icon: 'tabler-user', iconColor: 'primary' },
-//   { title: 'Paid Users', value: '4,567', change: 18, desc: 'Last Week Analytics', icon: 'tabler-user-plus', iconColor: 'error' },
-//   { title: 'Active Users', value: '19,860', change: -14, desc: 'Last Week Analytics', icon: 'tabler-user-check', iconColor: 'success' },
-//   { title: 'Pending Users', value: '237', change: 42, desc: 'Last Week Analytics', icon: 'tabler-user-exclamation', iconColor: 'warning' },
-// ])
 </script>
 
 <template>
   <section>
-    <!-- 👉 Widgets -->
-    <!-- <div class="d-flex mb-6">
-      <VRow>
-        <template
-          v-for="(data, id) in widgetData"
-          :key="id"
+
+    <!-- 👉 Change User Role Modal -->
+
+    <VDialog
+    v-model="isRoleDialogVisible"
+    max-width="600"
+    >
+    <!-- Dilog close btn -->
+    <DialogCloseBtn @click="isRoleDialogVisible = !isRoleDialogVisible" />
+
+    <!-- Dialog Content -->
+    <VCard title="Update Role">
+      <VCardText>
+        <VRow>
+        <!-- 👉 Role -->
+        <VCol cols="12">
+          <AppSelect
+            label="Select Role"
+            placeholder="Select Role"
+            :rules="[requiredValidator]"
+            :items="roles.map(role => role.title)"
+            />
+        </VCol>
+        </VRow>
+      </VCardText>
+
+      <VCardText class="d-flex justify-end flex-wrap gap-3">
+        <VBtn
+          variant="tonal"
+          color="secondary"
+          @click="isRoleDialogVisible = false"
         >
-          <VCol
-            cols="12"
-            md="3"
-            sm="6"
-          >
-            <VCard>
-              <VCardText>
-                <div class="d-flex justify-space-between">
-                  <div class="d-flex flex-column gap-y-1">
-                    <span class="text-body-1 text-medium-emphasis">{{ data.title }}</span>
-                    <div>
-                      <h4 class="text-h4">
-                        {{ data.value }}
-                        <span
-                          class="text-base "
-                          :class="data.change > 0 ? 'text-success' : 'text-error'"
-                        >({{ prefixWithPlus(data.change) }}%)</span>
-                      </h4>
-                    </div>
-                    <span class="text-sm">{{ data.desc }}</span>
-                  </div>
-                  <VAvatar
-                    :color="data.iconColor"
-                    variant="tonal"
-                    rounded
-                    size="38"
-                  >
-                    <VIcon
-                      :icon="data.icon"
-                      size="26"
-                    />
-                  </VAvatar>
-                </div>
-              </VCardText>
-            </VCard>
-          </VCol>
-        </template>
-      </VRow>
-    </div> -->
-
-
+          Close
+        </VBtn>
+        <VBtn @click="updateUserRole">
+          Save
+        </VBtn>
+      </VCardText>
+    </VCard>
+    </VDialog>
 
     <!-- 👉 Invite User Modal -->
-
     <VDialog
     v-model="isDialogVisible"
     max-width="600"
@@ -271,7 +282,6 @@ const inviteUser = async () => {
       </VCardText>
     </VCard>
     </VDialog>
-
 
 
     <VCard
@@ -392,7 +402,7 @@ const inviteUser = async () => {
         class="text-no-wrap"
         @update:options="updateOptions"
       >
-        <!-- User -->
+        <!-- 👉 User -->
         <template #item.user="{ item }">
           <div class="d-flex align-center">
             <VAvatar
@@ -416,13 +426,32 @@ const inviteUser = async () => {
                   {{ item.fullName }}
                 </RouterLink>
               </h6>
-              <span class="text-sm text-medium-emphasis">{{ item.email }}</span>
+              <span class="text-sm text-medium-emphasis">{{ item.username }}</span>
             </div>
           </div>
         </template>
 
+
+        <!-- 👉 Email -->
+        <template #item.email="{ item }">
+          <div class="d-flex align-center gap-4">
+            <VAvatar
+              :size="30"
+              :color="resolveUserRoleVariant(item.email).color"
+              variant="tonal"
+            >
+              <VIcon
+                :size="20"
+                icon="tabler-mail"
+              />
+            </VAvatar>
+            <span class="text-capitalize">{{ item.email }}</span>
+          </div>
+        </template>
+
+
         <!-- 👉 Role -->
-        <template #item.role="{ item }">
+        <!-- <template #item.role="{ item }">
           <div class="d-flex align-center gap-4">
             <VAvatar
               :size="30"
@@ -436,14 +465,10 @@ const inviteUser = async () => {
             </VAvatar>
             <span class="text-capitalize">{{ item.role }}</span>
           </div>
-        </template>
+        </template> -->
 
-        <!-- Plan -->
-        <template #item.plan="{ item }">
-          <span class="text-capitalize font-weight-medium">{{ item.currentPlan }}</span>
-        </template>
 
-        <!-- Status -->
+        <!-- 👉 Status -->
         <template #item.status="{ item }">
           <VChip
             :color="resolveUserStatusVariant(item.status)"
@@ -455,11 +480,11 @@ const inviteUser = async () => {
           </VChip>
         </template>
 
-        <!-- Actions -->
+        <!-- 👉 Actions -->
         <template #item.actions="{ item }">
 
           <!-- edit user role -->
-          <IconBtn @click="isEditUserRoleModalVisbile = true">
+          <IconBtn @click="openRoleDialog(item)">
             <VIcon icon="tabler-user-shield" />
           </IconBtn>
 
@@ -554,16 +579,8 @@ const inviteUser = async () => {
       @user-data="addNewUser"
     />
 
-    <EditUserRoleModal
-    v-model:isDrawerOpen="isEditUserRoleModalVisbile"
-    />
 
-    <!-- 👉 Edit User Role -->
-     <EditUserRoleModal
-      v-model:isDrawerOpen="isEditUserRoleModalVisbile"
-      @user-data="updateUserRole"
 
-     />
 
   </section>
 </template>
