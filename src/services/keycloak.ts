@@ -38,31 +38,36 @@ const removeTokens = () => {
 const refreshTokenIfNeeded = async () => {
   try {
     const exp = keycloak.tokenParsed?.exp;
-    const currentTime = Math.floor(Date.now() / 1000); 
+    if (!exp) throw new Error('No token expiration time found');
 
-    const offset = 40; 
-    const timeLeft = exp - currentTime - offset;
+    const currentTime = Math.floor(Date.now() / 1000);
+    const offset = 40; // Buffer to refresh token before actual expiry
     const refreshThreshold = 5;
+    const timeLeft = exp - currentTime - offset;
+
 
     if (timeLeft <= refreshThreshold) {
-      const minValidity = 5;
-      const isTokenValid = await keycloak.updateToken(minValidity);
-
-      if (isTokenValid) {
-        console.log('Token refreshed');
+      try {
+        await keycloak.updateToken(5); // Ensures at least 5s validity
+        console.log('Token refreshed successfully');
         storeTokens();
-      } else {
-        console.log('Token is valid, no need to refresh');
+      } catch (refreshError) {
+        console.error('Failed to refresh token, logging out:', refreshError);
+        keycloak.logout(); // Force logout if refresh fails
+        return;
       }
-    } else {
-      console.log(`Token is valid. ${timeLeft} seconds left.`);
-      // Schedule next refresh closer to token expiration
-      setTimeout(refreshTokenIfNeeded, (timeLeft - refreshThreshold) * 1000);
     }
+
+    // Always schedule the next check
+    const nextCheck = Math.max(timeLeft - refreshThreshold, 5) * 1000; 
+    setTimeout(refreshTokenIfNeeded, nextCheck);
   } catch (error) {
-    console.error('Error refreshing token:', error);
+    console.error('Error in refreshTokenIfNeeded:', error);
+    setTimeout(refreshTokenIfNeeded, 10000); // Retry after 10 seconds if error
   }
 };
+
+
 
 
 export { keycloak, refreshTokenIfNeeded, storeTokens, removeTokens };

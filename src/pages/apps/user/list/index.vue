@@ -14,6 +14,14 @@ const searchQuery = ref('')
 const selectedRole = ref()
 const selectedPlan = ref()
 const selectedStatus = ref()
+const users = ref() 
+const totalUsers = ref(0) 
+const roles = ref([]);
+const isDialogVisible = ref(false)
+const email = ref('')
+const isRoleDialogVisible = ref(false)
+const selectedUserId = ref(null)
+
 
 // Data table options
 const itemsPerPage = ref(10)
@@ -28,132 +36,13 @@ const updateOptions = (options: any) => {
   orderBy.value = options.sortBy[0]?.order
 }
 
-// Headers
+// Datatable Headers
 const headers = [
   { title: 'Name', key: 'user' },
   { title: 'Email', key: 'email' },
   { title: 'Status', key: 'status' },
   { title: 'Actions', key: 'actions', sortable: false },
 
-]
-
-
-const keyusers = ref() 
-const keytotalUsers = ref(0) 
-
-// 👉 Get users
-const getUsers = async () => {
-  try {
-    const response = await api.get('/users-services/users', {
-      headers: {
-        'Accept': 'application/json', // Safe standard header
-      }
-    });
-
-    keyusers.value = response.data
-    keytotalUsers.value = response.data.length 
-
-  } catch (error) {
-    console.error("Error fetching users:", error.response?.data || error.message);
-
-
-  }
-};
-
-getUsers();
-
-
-// 👉 Get User Role
-
-const getUserRole = async () => {
-  try {
-    const response = await api.get('/users-services/', {
-      headers: {
-        'Accept': 'application/json', // Safe standard header
-      }
-    });
-
-    console.log("User role got successfully:");
-
-  } catch (error) {
-    console.error("Error fetching users:", error.response?.data || error.message);
-
-
-  }
-};
-
-const keyroles = ref([]);
-
-const getRoles = async() => {
-
-  try {
-    const response = await api.get('/users-services/groups', {
-      headers: {
-        'Accept': 'application/json', // Safe standard header
-      }
-    });
-
-    keyroles.value = response.data.map(role => ({
-        name: role.name,
-        title: role.name.replace('_GROUP', '').replace('_', ' '),  // Clean up role name
-        id: role.id, 
-      }));
-
-    console.log("Roles got successfully:", keyroles.value);
-
-  } catch (error) {
-    console.error("Error fetching users:", error.response?.data || error.message);
-
-
-  }
-
-
-}
-
-getRoles()
-
-
-
-
-
-
-// 👉 Fetching users
-const { data: usersData, execute: fetchUsers } = await useApi<any>(createUrl('/apps/users', {
-  query: {
-    q: searchQuery,
-    status: selectedStatus,
-    plan: selectedPlan,
-    role: selectedRole,
-    itemsPerPage,
-    page,
-    sortBy,
-    orderBy,
-  },
-}))
-
-
-const users = computed(() => usersData.value.users)
-const totalUsers = computed(() => usersData.value.totalUsers)
-
-// 👉 search filters
-const roles = [
-  { title: 'Manager', value: 'manager', icon: 'tabler-user' },
-  { title: 'Driver', value: 'driver', icon: 'tabler-user' },
-  { title: 'Dispatcher', value: 'dispatcher', icon: 'tabler-user' },
-
-]
-
-const plans = [
-  { title: 'Basic', value: 'basic' },
-  { title: 'Company', value: 'company' },
-  { title: 'Enterprise', value: 'enterprise' },
-  { title: 'Team', value: 'team' },
-]
-
-const status = [
-  { title: 'Pending', value: 'pending' },
-  { title: 'Active', value: 'active' },
-  { title: 'Inactive', value: 'inactive' },
 ]
 
 const resolveUserRoleVariant = (role: string) => {
@@ -182,48 +71,176 @@ const resolveUserStatusVariant = (stat: string) => {
   if (stat === 'active')
     return 'success'
   if (stat === 'inactive')
-    return 'secondary'
+    return 'error'
 
   return 'primary'
 }
 
 
 
-// 👉 Delete user
-const deleteUser = async (id: number) => {
-  await $api(`/apps/users/${id}`, {
-    method: 'DELETE',
-  })
+// 👉 Change user Status
+const changeUserStatus = async (id: number, status: boolean) => {
+  const newStatus = !status;
+  
+  const result = await Swal.fire({
+    title: `Are you sure?`,
+    text: `Do you really want to ${newStatus ? "enable" : "disable"} this user?`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: newStatus ? "#28a745" : "#d33",
+    cancelButtonColor: "#6c757d",
+    confirmButtonText: newStatus ? "Yes, enable!" : "Yes, disable!",
+    cancelButtonText: "Cancel",
+    didOpen: () => {
+        document.querySelector('.swal2-confirm').style.color = 'white';
+        document.querySelector('.swal2-cancel').style.color = 'white';
+
+    }
+  });
+
+  if (result.isConfirmed) {
+    try {
+      await api.put(
+        `users-services/users/${id}/status?enabled=${newStatus}`,
+        {},
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+        }
+      );
+
+      console.log("User status changed successfully");
+
+      Swal.fire({
+        icon: "success",
+        title: "Success!",
+        text: `User has been ${newStatus ? "enabled" : "disabled"} successfully.`,
+        didOpen: () => {
+        document.querySelector('.swal2-confirm').style.color = 'white';
+      }
+      });
+
+      getUsers(); 
+
+    } catch (error) {
+      console.error("Error changing status:", error.response?.data || error.message);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to update user status. Please try again.",
+        didOpen: () => {
+        document.querySelector('.swal2-confirm').style.color = 'white';
+      }
+      });
+    }
+  }
+};
 
 
-  // refetch User
-  // TODO: Make this async
-  fetchUsers()
+// 👉 Get users
+const getUsers = async () => {
+  try {
+    const response = await api.get('/users-services/users', {
+      headers: {
+        'Accept': 'application/json', // Safe standard header
+      }
+    });
+
+    users.value = response.data
+    totalUsers.value = response.data.length 
+
+  } catch (error) {
+    console.error("Error fetching users:", error.response?.data || error.message);
+
+
+  }
+};
+getUsers();
+
+
+// 👉 Get Roles
+const getRoles = async() => {
+
+  try {
+    const response = await api.get('/users-services/groups', {
+      headers: {
+        'Accept': 'application/json', // Safe standard header
+      }
+    });
+
+    roles.value = response.data.map(role => ({
+        name: role.name,
+        title: role.name.replace('_GROUP', '').replace('_', ' '),  // Clean up role name
+        id: role.id, 
+      }));
+
+
+  } catch (error) {
+    console.error("Error fetching users:", error.response?.data || error.message);
+
+
+  }
+
+
 }
 
-const isRoleDialogVisible = ref(false)
-const selectedUserId = ref(null)
-
 const openRoleDialog = (user) => {
-  console.log(user.role)
+  getRoles()
+  console.log(user.id)
   selectedUserId.value = user.id
   selectedRole.value = user.role 
   isRoleDialogVisible.value = true
 }
-
 // 👉 Edit User Role
-const updateUserRole = (userData: {id: number,  role: string}) => {
-  isRoleDialogVisible.value = false
+const updateUserRole = async (id: number,  role: string) => {
+
+  if (!role) {
+    console.error('Role is required');
+    return;
+  }
+  role = `${role}_GROUP`.toLocaleLowerCase();
+
+  try {
+      const response = await api.post(`users-services/groups/${role}/users/${id}`, 
+      {headers: {'Content-Type': 'application/x-www-form-urlencoded'}});
+      console.log('Role updated successfully:', response.data);
+
+
+      Swal.fire({
+        icon: "success",
+        title: "Success!",
+        text: `User Role has been updated successfully.`,
+        didOpen: () => {
+        document.querySelector('.swal2-confirm').style.color = 'white';
+      }
+     });
+
+    getUsers();
+
+
+
+  
+  } catch (error) {
+    console.error("Error changing role:", error.response?.data || error.message);
+
+    Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to change the user role. Please try again.",
+        didOpen: () => {
+        document.querySelector('.swal2-confirm').style.color = 'white';
+      }
+    });
+  }
+
+  isRoleDialogVisible.value = false;
+
     
 }
 
-
-
-
 // 👉 Invite User
-const isDialogVisible = ref(false)
-const email = ref('')
-
 const inviteUser = async () => {
   if (!email.value) {
     console.error("Email is required");
@@ -236,16 +253,9 @@ const inviteUser = async () => {
       {
         headers: {
           'Content-Type': 'multipart/form-data',
-          'Accept': '*/*'
         }
       }
     );
-
-    if (response.data) {
-      console.log("User invited successfully:", response.data);
-    } else {
-      console.log("User invited, but no response data was returned.");
-    }
 
     Swal.fire({
       icon: 'success',
@@ -270,6 +280,9 @@ const inviteUser = async () => {
         document.querySelector('.swal2-confirm').style.color = 'white';
       }
     });
+
+    isDialogVisible.value = false; 
+    email.value = '';
   }
 };
 
@@ -280,7 +293,6 @@ const inviteUser = async () => {
   <section>
 
     <!-- 👉 Change User Role Modal -->
-
     <VDialog
     v-model="isRoleDialogVisible"
     max-width="600"
@@ -297,8 +309,9 @@ const inviteUser = async () => {
           <AppSelect
             label="Select Role"
             placeholder="Select Role"
+            v-model="selectedRole"
             :rules="[requiredValidator]"
-            :items="keyroles.map(role => role.title)"
+            :items="roles.map(role => role.title)"
             />
         </VCol>
         </VRow>
@@ -312,7 +325,7 @@ const inviteUser = async () => {
         >
           Close
         </VBtn>
-        <VBtn @click="updateUserRole">
+        <VBtn @click="updateUserRole(selectedUserId, selectedRole)">
           Save
         </VBtn>
       </VCardText>
@@ -359,9 +372,7 @@ const inviteUser = async () => {
     </VDialog>
 
 
-    
-
-
+  
     <VCard>
       <VCardText class="d-flex flex-wrap py-4 gap-4">
         <div class="me-3 d-flex gap-3">
@@ -406,8 +417,8 @@ const inviteUser = async () => {
       <VDataTableServer
         v-model:items-per-page="itemsPerPage"
         v-model:page="page"
-        :items="keyusers"
-        :items-length="keytotalUsers"
+        :items="users"
+        :items-length="totalUsers"
         :headers="headers"
         class="text-no-wrap"
         @update:options="updateOptions"
@@ -475,13 +486,24 @@ const inviteUser = async () => {
         <!-- 👉 Actions -->
         <template #item.actions="{ item }">
 
+
+          <!-- change user status -->
+          <IconBtn @click="changeUserStatus(item.id, item.enabled)">
+            <VIcon icon="tabler-power"
+            :style="{ color: item.enabled ? 'green' : 'red' }"
+            />
+          </IconBtn>
+
           <!-- edit user role -->
           <IconBtn @click="openRoleDialog(item)">
             <VIcon icon="tabler-user-shield" />
           </IconBtn>
 
+
+
+
           <!-- delete user  -->
-          <IconBtn @click="deleteUser(item.id)">
+          <IconBtn @click="">
             <VIcon icon="tabler-trash" />
           </IconBtn>
 
@@ -492,13 +514,13 @@ const inviteUser = async () => {
           <VDivider />
           <div class="d-flex align-center justify-sm-space-between justify-center flex-wrap gap-3 pa-5 pt-3">
             <p class="text-sm text-disabled mb-0">
-              {{ paginationMeta({ page, itemsPerPage }, keytotalUsers) }}
+              {{ paginationMeta({ page, itemsPerPage }, totalUsers) }}
             </p>
 
             <VPagination
               v-model="page"
-              :length="Math.ceil(keytotalUsers / itemsPerPage)"
-              :total-visible="$vuetify.display.xs ? 1 : Math.ceil(keytotalUsers / itemsPerPage)"
+              :length="Math.ceil(totalUsers / itemsPerPage)"
+              :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalUsers / itemsPerPage)"
             >
               <template #prev="slotProps">
                 <VBtn
