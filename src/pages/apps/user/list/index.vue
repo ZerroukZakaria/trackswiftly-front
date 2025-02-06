@@ -5,6 +5,9 @@ import AddNewUserDrawer from '@/views/apps/user/list/AddNewUserDrawer.vue'
 import { paginationMeta } from '@api-utils/paginationMeta'
 import type { UserProperties } from '@db/apps/users/types'
 import api from '@/utils/axios'
+import Swal from 'sweetalert2'
+
+
 
 // 👉 Store
 const searchQuery = ref('')
@@ -29,12 +32,90 @@ const updateOptions = (options: any) => {
 const headers = [
   { title: 'Name', key: 'user' },
   { title: 'Email', key: 'email' },
-  // { title: 'Role', key: 'role' },
   { title: 'Status', key: 'status' },
   { title: 'Actions', key: 'actions', sortable: false },
-  // { title: 'Plan', key: 'plan' },
-  // { title: 'Billing', key: 'billing' },
+
 ]
+
+
+const keyusers = ref() 
+const keytotalUsers = ref(0) 
+
+// 👉 Get users
+const getUsers = async () => {
+  try {
+    const response = await api.get('/users-services/users', {
+      headers: {
+        'Accept': 'application/json', // Safe standard header
+      }
+    });
+
+    keyusers.value = response.data
+    keytotalUsers.value = response.data.length 
+
+  } catch (error) {
+    console.error("Error fetching users:", error.response?.data || error.message);
+
+
+  }
+};
+
+getUsers();
+
+
+// 👉 Get User Role
+
+const getUserRole = async () => {
+  try {
+    const response = await api.get('/users-services/', {
+      headers: {
+        'Accept': 'application/json', // Safe standard header
+      }
+    });
+
+    console.log("User role got successfully:");
+
+  } catch (error) {
+    console.error("Error fetching users:", error.response?.data || error.message);
+
+
+  }
+};
+
+const keyroles = ref([]);
+
+const getRoles = async() => {
+
+  try {
+    const response = await api.get('/users-services/groups', {
+      headers: {
+        'Accept': 'application/json', // Safe standard header
+      }
+    });
+
+    keyroles.value = response.data.map(role => ({
+        name: role.name,
+        title: role.name.replace('_GROUP', '').replace('_', ' '),  // Clean up role name
+        id: role.id, 
+      }));
+
+    console.log("Roles got successfully:", keyroles.value);
+
+  } catch (error) {
+    console.error("Error fetching users:", error.response?.data || error.message);
+
+
+  }
+
+
+}
+
+getRoles()
+
+
+
+
+
 
 // 👉 Fetching users
 const { data: usersData, execute: fetchUsers } = await useApi<any>(createUrl('/apps/users', {
@@ -93,30 +174,20 @@ const resolveUserRoleVariant = (role: string) => {
 }
 
 const resolveUserStatusVariant = (stat: string) => {
-  const statLowerCase = stat.toLowerCase()
-  if (statLowerCase === 'pending')
+
+  stat = stat ? 'active' : 'inactive'
+
+  if (stat === 'pending')
     return 'warning'
-  if (statLowerCase === 'active')
+  if (stat === 'active')
     return 'success'
-  if (statLowerCase === 'inactive')
+  if (stat === 'inactive')
     return 'secondary'
 
   return 'primary'
 }
 
-const isAddNewUserDrawerVisible = ref(false)
 
-
-// 👉 Add new user
-const addNewUser = async (userData: UserProperties) => {
-  await $api('/apps/users', {
-    method: 'POST',
-    body: userData,
-  })
-
-  // refetch User
-  fetchUsers()
-}
 
 // 👉 Delete user
 const deleteUser = async (id: number) => {
@@ -146,29 +217,13 @@ const updateUserRole = (userData: {id: number,  role: string}) => {
     
 }
 
-// 👉 Get users
-const getUsers = async () => {
-  try {
-    const response = await api.get('/users-services/users', {
-      headers: {
-        'Accept': 'application/json', // Safe standard header
-      }
-    });
-    console.log("Users fetched successfully:", response.data);
-  } catch (error) {
-    console.error("Error fetching users:", error.response?.data || error.message);
-  }
-};
 
 
-
-
-
-getUsers();
 
 // 👉 Invite User
 const isDialogVisible = ref(false)
 const email = ref('')
+
 const inviteUser = async () => {
   if (!email.value) {
     console.error("Email is required");
@@ -186,12 +241,38 @@ const inviteUser = async () => {
       }
     );
 
-    console.log("User invited successfully:", response.data);
+    if (response.data) {
+      console.log("User invited successfully:", response.data);
+    } else {
+      console.log("User invited, but no response data was returned.");
+    }
+
+    Swal.fire({
+      icon: 'success',
+      title: 'User Invited!',
+      text: 'The user has been successfully invited.',
+      didOpen: () => {
+        document.querySelector('.swal2-confirm').style.color = 'white';
+      }
+    });
+
     isDialogVisible.value = false; 
+    email.value = '';
+
   } catch (error) {
     console.error("Error inviting user:", error.response?.data || error.message);
+
+    Swal.fire({
+      icon: 'error',
+      title: 'Oops!',
+      text: 'There was an error inviting the user. Please try again.',
+      didOpen: () => {
+        document.querySelector('.swal2-confirm').style.color = 'white';
+      }
+    });
   }
 };
+
 
 </script>
 
@@ -217,7 +298,7 @@ const inviteUser = async () => {
             label="Select Role"
             placeholder="Select Role"
             :rules="[requiredValidator]"
-            :items="roles.map(role => role.title)"
+            :items="keyroles.map(role => role.title)"
             />
         </VCol>
         </VRow>
@@ -278,57 +359,9 @@ const inviteUser = async () => {
     </VDialog>
 
 
-    <VCard
-      title="Filters"
-      class="mb-6"
-    >
-      <VCardText>
-        <VRow>
-          <!-- 👉 Select Role -->
-          <VCol
-            cols="12"
-            sm="12"
-          >
-            <AppSelect
-              v-model="selectedRole"
-              label="Select Role"
-              placeholder="Select Role"
-              :items="roles"
-              clearable
-              clear-icon="tabler-x"
-            />
-          </VCol>
-          <!-- 👉 Select Plan -->
-          <!-- <VCol
-            cols="12"
-            sm="4"
-          >
-            <AppSelect
-              v-model="selectedPlan"
-              label="Select Plan"
-              placeholder="Select Plan"
-              :items="plans"
-              clearable
-              clear-icon="tabler-x"
-            />
-          </VCol> -->
-          <!-- 👉 Select Status -->
-          <!-- <VCol
-            cols="12"
-            sm="6"
-          >
-            <AppSelect
-              v-model="selectedStatus"
-              label="Select Status"
-              placeholder="Select Status"
-              :items="status"
-              clearable
-              clear-icon="tabler-x"
-            />
-          </VCol> -->
-        </VRow>
-      </VCardText>
-    </VCard>
+    
+
+
     <VCard>
       <VCardText class="d-flex flex-wrap py-4 gap-4">
         <div class="me-3 d-flex gap-3">
@@ -357,23 +390,6 @@ const inviteUser = async () => {
             />
           </div>
 
-          <!-- 👉 Export button -->
-          <!-- <VBtn
-            variant="tonal"
-            color="secondary"
-            prepend-icon="tabler-screen-share"
-          >
-            Export
-          </VBtn> -->
-
-          <!-- 👉 Add user button -->
-          <!-- <VBtn
-            prepend-icon="tabler-mail-share"
-            @click="isAddNewUserDrawerVisible = true"
-          >
-            Invite Users
-          </VBtn> -->
-
           <!-- 👉 Invite user button -->
           <VBtn
             prepend-icon="tabler-mail-share"
@@ -390,8 +406,8 @@ const inviteUser = async () => {
       <VDataTableServer
         v-model:items-per-page="itemsPerPage"
         v-model:page="page"
-        :items="users"
-        :items-length="totalUsers"
+        :items="keyusers"
+        :items-length="keytotalUsers"
         :headers="headers"
         class="text-no-wrap"
         @update:options="updateOptions"
@@ -402,14 +418,14 @@ const inviteUser = async () => {
             <VAvatar
               size="34"
               :variant="!item.avatar ? 'tonal' : undefined"
-              :color="!item.avatar ? resolveUserRoleVariant(item.role).color : undefined"
+              :color="!item.avatar ? resolveUserRoleVariant('manager').color : undefined"
               class="me-3"
             >
               <VImg
                 v-if="item.avatar"
                 :src="item.avatar"
               />
-              <span v-else>{{ avatarText(item.fullName) }}</span>
+              <span v-else>{{ avatarText(item.firstName) }}</span>
             </VAvatar>
             <div class="d-flex flex-column">
               <h6 class="text-base">
@@ -417,7 +433,7 @@ const inviteUser = async () => {
                   :to="{ name: 'apps-user-view-id', params: { id: item.id } }"
                   class="font-weight-medium text-link"
                 >
-                  {{ item.fullName }}
+                  {{ item.firstName }} {{ item.lastName }}
                 </RouterLink>
               </h6>
               <span class="text-sm text-medium-emphasis">{{ item.username }}</span>
@@ -439,39 +455,21 @@ const inviteUser = async () => {
                 icon="tabler-mail"
               />
             </VAvatar>
-            <span class="text-capitalize">{{ item.email }}</span>
+            <span>{{ item.email }}</span>
           </div>
         </template>
-
-
-        <!-- 👉 Role -->
-        <!-- <template #item.role="{ item }">
-          <div class="d-flex align-center gap-4">
-            <VAvatar
-              :size="30"
-              :color="resolveUserRoleVariant(item.role).color"
-              variant="tonal"
-            >
-              <VIcon
-                :size="20"
-                :icon="resolveUserRoleVariant(item.role).icon"
-              />
-            </VAvatar>
-            <span class="text-capitalize">{{ item.role }}</span>
-          </div>
-        </template> -->
 
 
         <!-- 👉 Status -->
         <template #item.status="{ item }">
           <VChip
-            :color="resolveUserStatusVariant(item.status)"
+            :color="resolveUserStatusVariant(item.enabled)"
             size="small"
             label
             class="text-capitalize"
           >
-            {{ item.status }}
-          </VChip>
+          {{ item.enabled ? 'active' : 'inactive' }}
+        </VChip>
         </template>
 
         <!-- 👉 Actions -->
@@ -482,49 +480,11 @@ const inviteUser = async () => {
             <VIcon icon="tabler-user-shield" />
           </IconBtn>
 
-
           <!-- delete user  -->
           <IconBtn @click="deleteUser(item.id)">
             <VIcon icon="tabler-trash" />
           </IconBtn>
 
-          <!-- 3 dots menu -->
-          <!-- <VBtn
-            icon
-            variant="text"
-            size="small"
-            color="medium-emphasis"
-          >
-            <VIcon
-              size="24"
-              icon="tabler-dots-vertical"
-            />
-            <VMenu activator="parent">
-              <VList>
-                <VListItem :to="{ name: 'apps-user-view-id', params: { id: item.id } }">
-                  <template #prepend>
-                    <VIcon icon="tabler-eye" />
-                  </template>
-
-                  <VListItemTitle>View</VListItemTitle>
-                </VListItem>
-
-                <VListItem link>
-                  <template #prepend>
-                    <VIcon icon="tabler-pencil" />
-                  </template>
-                  <VListItemTitle>Edit</VListItemTitle>
-                </VListItem>
-
-                <VListItem @click="deleteUser(item.id)">
-                  <template #prepend>
-                    <VIcon icon="tabler-trash" />
-                  </template>
-                  <VListItemTitle>Delete</VListItemTitle>
-                </VListItem>
-              </VList>
-            </VMenu>
-          </VBtn> -->
         </template>
 
         <!-- pagination -->
@@ -532,13 +492,13 @@ const inviteUser = async () => {
           <VDivider />
           <div class="d-flex align-center justify-sm-space-between justify-center flex-wrap gap-3 pa-5 pt-3">
             <p class="text-sm text-disabled mb-0">
-              {{ paginationMeta({ page, itemsPerPage }, totalUsers) }}
+              {{ paginationMeta({ page, itemsPerPage }, keytotalUsers) }}
             </p>
 
             <VPagination
               v-model="page"
-              :length="Math.ceil(totalUsers / itemsPerPage)"
-              :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalUsers / itemsPerPage)"
+              :length="Math.ceil(keytotalUsers / itemsPerPage)"
+              :total-visible="$vuetify.display.xs ? 1 : Math.ceil(keytotalUsers / itemsPerPage)"
             >
               <template #prev="slotProps">
                 <VBtn
@@ -567,11 +527,7 @@ const inviteUser = async () => {
       </VDataTableServer>
       <!-- SECTION -->
     </VCard>
-    <!-- 👉 Add New User -->
-    <AddNewUserDrawer
-      v-model:isDrawerOpen="isAddNewUserDrawerVisible"
-      @user-data="addNewUser"
-    />
+
 
 
 
