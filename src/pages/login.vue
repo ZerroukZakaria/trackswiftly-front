@@ -247,7 +247,8 @@ const loginWithKeycloakNewWindow = async () => {
   height: 100vh;
   width: 100vw;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
+  padding-right: 5vw;
   align-items: center;
   overflow: hidden;
 }
@@ -271,7 +272,7 @@ const loginWithKeycloakNewWindow = async () => {
 /* Center the login card */
 .auth-card-v2 {
   position: relative;
-  z-index: 2; /* Keep the login form above the background */
+  z-index: 2;
 }
 
 /* Ensure form elements are readable */
