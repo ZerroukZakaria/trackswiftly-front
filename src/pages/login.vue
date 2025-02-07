@@ -164,25 +164,8 @@ const loginWithKeycloakNewWindow = async () => {
     no-gutters
     class="auth-wrapper bg-surface"
   >
-    <VCol
-      lg="8"
-      class="d-none d-lg-flex"
-    >
-      <div class="position-relative bg-background rounded-lg w-100 ma-8 me-0">
-        <div class="d-flex align-center justify-center w-100 h-100">
-          <VImg
-            max-width="505"
-            :src="authThemeImg"
-            class="auth-illustration mt-16 mb-2"
-          />
-        </div>
-
-        <VImg
-          :src="authThemeMask"
-          class="auth-footer-mask"
-        />
-      </div>
-    </VCol>
+    <!-- Background Image -->
+    <div class="auth-background"></div>
 
     <VCol
       cols="12"
@@ -208,19 +191,6 @@ const loginWithKeycloakNewWindow = async () => {
           </p>
         </VCardText>
 
-        <!-- <VCardText>
-          <VAlert
-            color="primary"
-            variant="tonal"
-          >
-            <p class="text-sm mb-2">
-              Admin Email: <strong>admin@demo.com</strong> / Pass: <strong>admin</strong>
-            </p>
-            <p class="text-sm mb-0">
-              Client Email: <strong>client@demo.com</strong> / Pass: <strong>client</strong>
-            </p>
-          </VAlert>
-        </VCardText> -->
         <VCardText>
           <VForm
             ref="refVForm"
@@ -241,7 +211,7 @@ const loginWithKeycloakNewWindow = async () => {
               </VCol>
 
               <!-- password -->
-              <VCol  v-show="!isHidden" cols="12 ">
+              <VCol v-show="!isHidden" cols="12">
                 <AppTextField class="mb-4"
                   v-model="credentials.password"
                   label="Password"
@@ -252,60 +222,15 @@ const loginWithKeycloakNewWindow = async () => {
                   :append-inner-icon="isPasswordVisible ? 'tabler-eye-off' : 'tabler-eye'"
                   @click:append-inner="isPasswordVisible = !isPasswordVisible"
                 />
-
-                <!-- <div class="d-flex align-center flex-wrap justify-space-between mt-1 mb-4">
-                  <VCheckbox
-                    v-model="rememberMe"
-                    label="Remember me"
-                  />
-                  <RouterLink
-                    class="text-primary ms-2 mb-1"
-                    :to="{ name: 'forgot-password' }"
-                  >
-                    Forgot Password?
-                  </RouterLink>
-                </div> -->
-
               </VCol>
 
+              <!-- Login Button -->
               <VCol cols="12">
                 <VBtn block type="submit">
                   <VIcon size="30" class="me-1">tabler-user-circle</VIcon>
-                    Login
-              </VBtn>
+                  LOGIN
+                </VBtn>
               </VCol>
-            
-
-
-              <!-- create account -->
-              <!-- <VCol
-                cols="12"
-                class="text-center"
-              >
-                <span>New on our platform?</span>
-                <RouterLink
-                  class="text-primary ms-2"
-                  :to="{ name: 'register' }"
-                >
-                  Create an account
-                </RouterLink>
-              </VCol> -->
-              <!-- <VCol
-                cols="12"
-                class="d-flex align-center"
-              >
-                <VDivider />
-                <span class="mx-4">or</span>
-                <VDivider />
-              </VCol> -->
-
-              <!-- auth providers -->
-              <!-- <VCol
-                cols="12"
-                class="text-center"
-              >
-                <AuthProvider />
-              </VCol> -->
             </VRow>
           </VForm>
         </VCardText>
@@ -314,6 +239,46 @@ const loginWithKeycloakNewWindow = async () => {
   </VRow>
 </template>
 
-<style lang="scss">
-@use "@core/scss/template/pages/page-auth.scss";
+
+<style scoped>
+/* Make the entire page take the background */
+.auth-wrapper {
+  position: relative;
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+/* Fullscreen Background Image */
+
+
+.auth-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh; /* Ensure it covers the screen */
+  background: url('/images/background.jpg') no-repeat center center;
+  background-size: cover;
+  z-index: 1
+}
+
+
+
+/* Center the login card */
+.auth-card-v2 {
+  position: relative;
+  z-index: 2; /* Keep the login form above the background */
+}
+
+/* Ensure form elements are readable */
+.auth-card-v2 VCard {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  padding: 20px;
+}
 </style>
