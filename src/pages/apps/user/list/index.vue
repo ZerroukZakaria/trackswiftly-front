@@ -188,7 +188,6 @@ const getRoles = async() => {
 
 const openRoleDialog = (user) => {
   getRoles()
-  console.log(user.id)
   selectedUserId.value = user.id
   selectedRole.value = user.role 
   isRoleDialogVisible.value = true
