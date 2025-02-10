@@ -1,10 +1,10 @@
 export default [
-  { heading: 'Apps & Pages' },
+  { heading: 'Telematics Center' },
 
   {
-    title: 'Users & Roles',
-    icon: { icon: 'tabler-users-group' },
-    to: 'apps-user-list'
+    title: 'Vehicles',
+    icon: { icon: 'tabler-car' },
+    to: 'vehicles-list'
   },
 
 
