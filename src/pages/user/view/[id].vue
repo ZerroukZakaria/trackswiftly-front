@@ -5,8 +5,9 @@ import UserTabBillingsPlans from '@/views/apps/user/view/UserTabBillingsPlans.vu
 import UserTabConnections from '@/views/apps/user/view/UserTabConnections.vue'
 import UserTabNotifications from '@/views/apps/user/view/UserTabNotifications.vue'
 import UserTabSecurity from '@/views/apps/user/view/UserTabSecurity.vue'
+import api from '@/utils/axios'
 
-const route = useRoute('apps-user-view-id')
+const route = useRoute('user-view-id')
 
 const userTab = ref(null)
 
@@ -18,7 +19,36 @@ const tabs = [
   { icon: 'tabler-link', title: 'Connections' },
 ]
 
-const { data: userData } = await useApi<any>(`/apps/users/${route.params.id}`)
+// const { data: userData } = await useApi<any>(`/apps/users/${route.params.id}`)
+
+const userData = ref(null);
+
+
+
+const getUser = async () => {
+  try {
+    const response = await api.get(`/users-services/users/${route.params.id}`, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+           
+      }
+    });
+
+    userData.value = response.data; 
+
+    console.log(userData.value);
+
+  } catch (error) {
+    console.error("Error fetching users:", error.response?.data || error.message);
+
+
+  }
+};
+
+onMounted(() => {
+  getUser();
+});
+
 </script>
 
 <template>

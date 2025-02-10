@@ -1,18 +1,31 @@
 <script setup lang="ts">
 import { VDataTableServer } from 'vuetify/labs/VDataTable'
 
-import AddNewUserDrawer from '@/views/apps/user/list/AddNewUserDrawer.vue'
 import { paginationMeta } from '@api-utils/paginationMeta'
-import type { UserProperties } from '@db/apps/users/types'
 import api from '@/utils/axios'
 import Swal from 'sweetalert2'
+import UserTabAccount from '@/views/apps/user/view/UserTabAccount.vue'
+import UserTabBillingsPlans from '@/views/apps/user/view/UserTabBillingsPlans.vue'
+import UserTabConnections from '@/views/apps/user/view/UserTabConnections.vue'
+import UserTabNotifications from '@/views/apps/user/view/UserTabNotifications.vue'
+import UserTabSecurity from '@/views/apps/user/view/UserTabSecurity.vue'
+import UserBioPanelDialog from '@/views/apps/user/view/UserBioPanelDialog.vue'
 
+
+
+
+const tabs = [
+  { icon: 'tabler-user-check', title: 'Account' },
+  { icon: 'tabler-lock', title: 'Security' },
+  { icon: 'tabler-currency-dollar', title: 'Billing & Plan' },
+  { icon: 'tabler-bell', title: 'Notifications' },
+  { icon: 'tabler-link', title: 'Connections' },
+]
 
 
 // 👉 Store
 const searchQuery = ref('')
 const selectedRole = ref()
-const selectedPlan = ref()
 const selectedStatus = ref()
 const users = ref() 
 const totalUsers = ref(0) 
@@ -20,7 +33,10 @@ const roles = ref([]);
 const isDialogVisible = ref(false)
 const email = ref('')
 const isRoleDialogVisible = ref(false)
-const selectedUserId = ref(null)
+const isUserDialogVisible = ref(false)
+const selectedUserId = ref(0)
+const userData = ref();
+const userTab = ref(null)
 
 
 // Data table options
@@ -160,6 +176,8 @@ const getUsers = async () => {
 getUsers();
 
 
+
+
 // 👉 Get Roles
 const getRoles = async() => {
 
@@ -192,6 +210,35 @@ const openRoleDialog = (user) => {
   selectedRole.value = user.role 
   isRoleDialogVisible.value = true
 }
+
+
+const getUser = async (id: number) => {
+  try {
+    const response = await api.get(`/users-services/users/${id}`, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+           
+      }
+    });
+
+    userData.value = response.data; 
+
+    console.log(userData.value);
+
+  } catch (error) {
+    console.error("Error fetching users:", error.response?.data || error.message);
+
+
+  }
+};
+
+
+const openUserDialog = async (id: number) => {
+  console.log('Fetching user:', id)
+  await getUser(id)
+  isUserDialogVisible.value = true
+}
+
 // 👉 Edit User Role
 const updateUserRole = async (id: number,  role: string) => {
 
@@ -336,6 +383,8 @@ const inviteUser = async () => {
     v-model="isDialogVisible"
     max-width="600"
     >
+
+
     <!-- Dilog close btn -->
     <DialogCloseBtn @click="isDialogVisible = !isDialogVisible" />
 
@@ -369,6 +418,83 @@ const inviteUser = async () => {
       </VCardText>
     </VCard>
     </VDialog>
+
+    <!-- 👉 User Details Modal -->
+
+   <VDialog v-model="isUserDialogVisible" max-width="1000"     
+    transition="dialog-bottom-transition">
+
+    
+
+  <!-- Dialog Close Button -->
+  <DialogCloseBtn @click="isUserDialogVisible = false" />
+
+  <!-- Dialog Content -->
+    <VCard title="User Details">
+      <VRow v-if="userData">
+    <VCol
+      cols="12"
+      md="5"
+      lg="4"
+    >
+      <UserBioPanelDialog :user-data="userData" />
+    </VCol>
+
+    <VCol
+      cols="12"
+      md="7"
+      lg="8"
+    >
+      <VTabs
+        v-model="userTab"
+        class="v-tabs-pill"
+      >
+        <VTab
+          v-for="tab in tabs"
+          :key="tab.icon"
+        >
+          <VIcon
+            :size="18"
+            :icon="tab.icon"
+            class="me-1"
+          />
+          <span>{{ tab.title }}</span>
+        </VTab>
+      </VTabs>
+
+      <VWindow
+        v-model="userTab"
+        class="mt-6 disable-tab-transition"
+        :touch="false"
+      >
+        <VWindowItem>
+          <UserTabAccount />
+        </VWindowItem>
+
+        <VWindowItem>
+          <UserTabSecurity />
+        </VWindowItem>
+
+        <VWindowItem>
+          <UserTabBillingsPlans />
+        </VWindowItem>
+
+        <VWindowItem>
+          <UserTabNotifications />
+        </VWindowItem>
+
+        <VWindowItem>
+          <UserTabConnections />
+        </VWindowItem>
+      </VWindow>
+    </VCol>
+  </VRow>
+
+    </VCard>
+    </VDialog>
+
+
+
 
 
   
@@ -426,10 +552,11 @@ const inviteUser = async () => {
         <template #item.user="{ item }">
           <div class="d-flex align-center">
             <VAvatar
+              @click="openUserDialog(item.id)"
               size="34"
               :variant="!item.avatar ? 'tonal' : undefined"
               :color="!item.avatar ? resolveUserRoleVariant('manager').color : undefined"
-              class="me-3"
+              class=" cursor-pointer over:opacity-80 transition duration-200 me-3"
             >
               <VImg
                 v-if="item.avatar"
@@ -439,12 +566,12 @@ const inviteUser = async () => {
             </VAvatar>
             <div class="d-flex flex-column">
               <h6 class="text-base">
-                <RouterLink
-                  :to="{ name: 'apps-user-view-id', params: { id: item.id } }"
-                  class="font-weight-medium text-link"
+                <span
+                  class="cursor-pointer over:opacity-80 transition duration-200 font-weight-medium text-link"
+                  @click="openUserDialog(item.id)"
                 >
                   {{ item.firstName }} {{ item.lastName }}
-                </RouterLink>
+                </span>
               </h6>
               <span class="text-sm text-medium-emphasis">{{ item.username }}</span>
             </div>
@@ -555,3 +682,4 @@ const inviteUser = async () => {
 
   </section>
 </template>
+

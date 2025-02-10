@@ -7,7 +7,7 @@ export default [
     children: [
       {
         title: 'Users',
-        to: 'apps-user-list'  
+        to: 'user-list'  
 
       },
       {
