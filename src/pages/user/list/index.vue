@@ -61,24 +61,10 @@ const headers = [
 
 ]
 
-const resolveUserRoleVariant = (role: string) => {
-  const roleLowerCase = role.toLowerCase()
 
-  if (roleLowerCase === 'subscriber')
-    return { color: 'warning', icon: 'tabler-circle-check' }
-  if (roleLowerCase === 'driver')
-    return { color: 'success', icon: 'tabler-user' }
-  if (roleLowerCase === 'maintainer')
-    return { color: 'primary', icon: 'tabler-chart-pie-2' }
-  if (roleLowerCase === 'manager')
-    return { color: 'info', icon: 'tabler-edit' }
-  if (roleLowerCase === 'admin')
-    return { color: 'secondary', icon: 'tabler-device-laptop' }
 
-  return { color: 'primary', icon: 'tabler-user' }
-}
 
-const resolveUserStatusVariant = (stat: string) => {
+const statusColor = (stat: string) => {
 
   stat = stat ? 'active' : 'inactive'
 
@@ -88,10 +74,8 @@ const resolveUserStatusVariant = (stat: string) => {
     return 'success'
   if (stat === 'inactive')
     return 'error'
-
   return 'primary'
 }
-
 
 
 // 👉 Change user Status
@@ -176,8 +160,6 @@ const getUsers = async () => {
 getUsers();
 
 
-
-
 // 👉 Get Roles
 const getRoles = async() => {
 
@@ -223,7 +205,6 @@ const getUser = async (id: number) => {
 
     userData.value = response.data; 
 
-    console.log(userData.value);
 
   } catch (error) {
     console.error("Error fetching users:", error.response?.data || error.message);
@@ -234,7 +215,6 @@ const getUser = async (id: number) => {
 
 
 const openUserDialog = async (id: number) => {
-  console.log('Fetching user:', id)
   await getUser(id)
   isUserDialogVisible.value = true
 }
@@ -555,7 +535,8 @@ const inviteUser = async () => {
               @click="openUserDialog(item.id)"
               size="34"
               :variant="!item.avatar ? 'tonal' : undefined"
-              :color="!item.avatar ? resolveUserRoleVariant('manager').color : undefined"
+              :color="!item.avatar ? 'info' : undefined"
+
               class=" cursor-pointer over:opacity-80 transition duration-200 me-3"
             >
               <VImg
@@ -584,7 +565,7 @@ const inviteUser = async () => {
           <div class="d-flex align-center gap-4">
             <VAvatar
               :size="30"
-              :color="resolveUserRoleVariant(item.email).color"
+              color="primary"
               variant="tonal"
             >
               <VIcon
@@ -600,7 +581,7 @@ const inviteUser = async () => {
         <!-- 👉 Status -->
         <template #item.status="{ item }">
           <VChip
-            :color="resolveUserStatusVariant(item.enabled)"
+            :color="statusColor(item.enabled)"
             size="small"
             label
             class="text-capitalize"
