@@ -36,6 +36,7 @@ const isRoleDialogVisible = ref(false)
 const isUserDialogVisible = ref(false)
 const selectedUserId = ref(0)
 const userData = ref();
+const userRoles = ref();
 const userTab = ref(null)
 
 
@@ -62,7 +63,14 @@ const headers = [
 ]
 
 
-
+const getUserRoles = async (id: number) => {
+  const user = await getUser(id);
+  if (user) {
+    userRoles.value = user.groups?.map((role: string) =>
+      role.replace("_GROUP", "").toUpperCase()
+    ) || [];
+  }
+};
 
 const statusColor = (stat: string) => {
 
@@ -186,10 +194,11 @@ const getRoles = async() => {
 
 }
 
-const openRoleDialog = (user) => {
+const openRoleDialog = async (user) => {
   getRoles()
+  await getUserRoles(user.id)
   selectedUserId.value = user.id
-  selectedRole.value = user.role 
+  selectedRole.value = userRoles.value; 
   isRoleDialogVisible.value = true
 }
 
@@ -204,6 +213,7 @@ const getUser = async (id: number) => {
     });
 
     userData.value = response.data; 
+    return response.data;
 
 
   } catch (error) {
@@ -338,6 +348,7 @@ const inviteUser = async () => {
             v-model="selectedRole"
             :rules="[requiredValidator]"
             :items="roles.map(role => role.title)"
+            multiple
             />
         </VCol>
         </VRow>
@@ -475,9 +486,6 @@ const inviteUser = async () => {
 
 
 
-
-
-  
     <VCard>
       <VCardText class="d-flex flex-wrap py-4 gap-4">
         <div class="me-3 d-flex gap-3">
