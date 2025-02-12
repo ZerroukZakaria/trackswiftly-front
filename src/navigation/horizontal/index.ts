@@ -1,8 +1,8 @@
 import userAccess from './user-access'
 import dashboard from './dashboard'
-import vehicles from './vehicles'
+import telematicsCenter from './telematics-center'
 
 
 import type { HorizontalNavItems } from '@layouts/types'
 
-export default [...dashboard, ...userAccess, ...vehicles] as HorizontalNavItems
+export default [...dashboard, ...userAccess, ...telematicsCenter] as HorizontalNavItems

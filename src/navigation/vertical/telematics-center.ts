@@ -6,6 +6,13 @@ export default [
     icon: { icon: 'tabler-car' },
     to: 'vehicles-list'
   },
+  {
+    title: 'Devices',
+    icon: { icon: 'tabler-router' },
+    to: 'devices-list'
+
+
+  },
 
 
   // {
