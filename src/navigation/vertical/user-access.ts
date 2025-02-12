@@ -7,8 +7,9 @@ export default [
     children: [
       {
         title: 'Users',
-        to: 'user-list'  
-
+        to: 'user-list'  ,
+        
+        
       },
       {
         title: 'Integration',
