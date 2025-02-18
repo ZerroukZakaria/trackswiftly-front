@@ -3,7 +3,7 @@ import { keycloak } from '@/services/keycloak';
 import Swal from 'sweetalert2';
 
 const api = axios.create({
-  baseURL: 'https://authserver.obayd.online/realms/TrackSwiftlyRealm',
+  baseURL: 'https://auth.trackswiftly.com/realms/trackswiftlyRealm',
 });
 
 // Attach token

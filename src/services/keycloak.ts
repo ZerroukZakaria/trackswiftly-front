@@ -12,8 +12,8 @@ interface KeycloakConfig {
 
 // Initialize Keycloak instance
 const keycloakConfig: KeycloakConfig = {
-  url: 'https://authserver.obayd.online', // Keycloak server URL
-  realm: 'TrackSwiftlyRealm', // Your realm name
+  url: 'https://auth.trackswiftly.com', // Keycloak server URL
+  realm: 'trackswiftlyRealm', // Your realm name
   clientId: 'track-swiftly', // Your client ID
   redirectUri: window.location.origin,
   checkLoginIframe: false, // Add this
