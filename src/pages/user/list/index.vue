@@ -159,6 +159,8 @@ const getUsers = async () => {
     users.value = response.data
     totalUsers.value = response.data.length 
 
+    console.log(users.value);
+
   } catch (error) {
     console.error("Error fetching users:", error.response?.data || error.message);
 

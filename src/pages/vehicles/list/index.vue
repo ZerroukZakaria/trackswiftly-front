@@ -1,35 +1,90 @@
 <script setup lang="ts">
 import { VDataTableServer } from 'vuetify/labs/VDataTable'
 import { paginationMeta } from '@api-utils/paginationMeta'
+import type { VForm } from 'vuetify/components/VForm'
+
 import api from '@/utils/axios'
-import Swal from 'sweetalert2'
 
 const headers = [
   { title: 'Matricule', key: 'matricule' },
   { title: 'Type', key: 'type' },
   { title: 'Group', key: 'group' },
   { title: 'Model', key: 'model' },
-  { title: 'Status', key: 'status' },
   { title: 'Actions', key: 'actions', sortable: false },
 
 ]
 
 // 👉 Store
 const searchQuery = ref('')
-const vehicles = ref() 
+const vehicles = ref([]) 
+const vehicle = ref('')
 const totalVehicles = ref(0) 
-const isVehicleDialog = ref(false)
+const isVehicleDialogDrawer = ref(false)
 
+const isAddVehicleDrawer = ref(false)
 
-const getVehicle = async (id: number) => {
-}
-
+const isFormValid = ref(false)
+const refForm = ref<VForm>()
 
 // Data table options
 const itemsPerPage = ref(10)
 const page = ref(1)
 const sortBy = ref()
 const orderBy = ref()
+
+const onSubmit = () => {
+
+}
+
+
+
+
+const getVehicle = async (id: number) => {
+  try {
+    const response = await api.get(`https://app.trackswiftly.com/vehicles/${id}`, {
+      headers: {
+        'Accept': '*/*',
+      }
+    });
+
+    
+    vehicle.value = response.data
+    console.log(vehicle.value);
+    
+
+
+  } catch (error) {
+    console.error("Error fetching users:", error.response?.data || error.message);
+
+
+  }
+
+}
+
+
+const getVehicles = async () => {
+  try {
+    const response = await api.get(`https://app.trackswiftly.com/vehicles?page=${page.value - 1}&pageSize=${itemsPerPage.value}`, {
+      headers: {
+        'Accept': '*/*',
+      }
+    });
+
+    
+    vehicles.value = response.data.content
+    totalVehicles.value = response.data.totalElements 
+
+    console.log(vehicles.value);
+
+
+  } catch (error) {
+    console.error("Error fetching users:", error.response?.data || error.message);
+
+
+  }
+};
+getVehicles();
+
 
 
 // Update data table options
@@ -39,10 +94,10 @@ const updateOptions = (options: any) => {
   orderBy.value = options.sortBy[0]?.order
 }
 
-const openVehicleDialog = async (id: number) => {
-  console.log('Fetching user:', id)
+const openVehicleDrawer = async (id: number) => {
+  console.log('Fetching vehicle:', id)
   await getVehicle(id)
-  isVehicleDialog.value = true
+  isVehicleDialogDrawer.value = true
 }
 
 
@@ -50,6 +105,38 @@ const openVehicleDialog = async (id: number) => {
 
 
 <template>
+
+    <VNavigationDrawer
+      v-model="isAddVehicleDrawer"
+      temporary
+      :width="400"
+      location="end"
+      class="scrollable-content"
+    >
+
+        <!-- 👉 Title -->
+    <AppDrawerHeaderSection
+      title="Add Vehicle"
+      @cancel="isAddVehicleDrawer = false"
+    />
+
+    <PerfectScrollbar :options="{ wheelPropagation: false }">
+      <VCard flat>
+        <VCardText>
+          <!-- 👉 Form -->
+          <VForm
+            ref="refForm"
+            v-model="isFormValid"
+            @submit.prevent="onSubmit"
+          >
+
+          </VForm>
+        </VCardText>
+      </VCard>
+    </PerfectScrollbar>
+
+    </VNavigationDrawer>
+
       <VCard>
       <VCardText class="d-flex flex-wrap py-4 gap-4">
         <div class="me-3 d-flex gap-3">
@@ -78,7 +165,19 @@ const openVehicleDialog = async (id: number) => {
             />
           </div>
         </div>
+
+        <!-- 👉 Invite user button -->
+        <VBtn
+          prepend-icon="tabler-category-plus"
+          @click="isAddVehicleDrawer = true"
+        >
+        Add Vehicle
+      </VBtn>
+
       </VCardText>
+
+
+      
 
       <VDivider />
 
@@ -93,10 +192,10 @@ const openVehicleDialog = async (id: number) => {
         @update:options="updateOptions"
       >
         <!-- 👉 Vehicle -->
-        <template #item.user="{ item }">
+        <template #item.matricule="{ item }">
           <div class="d-flex align-center">
             <VAvatar
-              @click="openVehicleDialog(item.id)"
+              @click="openVehicleDrawer(item.id)"
               size="34"
               :variant="!item.avatar ? 'tonal' : undefined"
               class=" cursor-pointer over:opacity-80 transition duration-200 me-3"
@@ -105,50 +204,49 @@ const openVehicleDialog = async (id: number) => {
                 v-if="item.avatar"
                 :src="item.avatar"
               />
-              <span v-else>{{ avatarText(item.firstName) }}</span>
+              <span v-else>{{ avatarText(item.licensePlate) }}</span>
             </VAvatar>
             <div class="d-flex flex-column">
               <h6 class="text-base">
                 <span
                   class="cursor-pointer over:opacity-80 transition duration-200 font-weight-medium text-link"
-                  @click="openVehicleDialog(item.id)"
+                  @click="openVehicleDrawer(item.id)"
                 >
-                  {{ item.firstName }} {{ item.lastName }}
+                  {{ item.licensePlate }}
                 </span>
               </h6>
-              <span class="text-sm text-medium-emphasis">{{ item.username }}</span>
+              <!-- <span class="text-sm text-medium-emphasis">{{ item.licensePlate }}</span> -->
             </div>
           </div>
         </template>
 
 
-        <!-- 👉 Email -->
-        <template #item.email="{ item }">
+        <!-- 👉 Type -->
+        <template #item.type="{ item }">
           <div class="d-flex align-center gap-4">
-            <VAvatar
-              :size="30"
-              variant="tonal"
-            >
-              <VIcon
-                :size="20"
-                icon="tabler-mail"
-              />
-            </VAvatar>
-            <span>{{ item.email }}</span>
+
+            <span>{{ item.vehicleType.name }}</span>
+          </div>
+        </template>
+
+        <!-- 👉 Group -->
+        <template #item.group="{ item }">
+          <div class="d-flex align-center gap-4">
+
+            <span>{{ item.vhicleGroup.name }}</span>
           </div>
         </template>
 
 
-        <!-- 👉 Status -->
-        <template #item.status="{ item }">
-          <VChip
-            size="small"
-            label
-            class="text-capitalize"
-          >
-          {{ item.enabled ? 'active' : 'inactive' }}
-        </VChip>
+        <!-- 👉 Model -->
+        <template #item.model="{ item }">
+          <div class="d-flex align-center gap-4">
+            <span>{{ item.model.name }}</span>
+          </div>
         </template>
+
+
+
 
         <!-- 👉 Actions -->
         <template #item.actions="{ item }">
