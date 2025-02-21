@@ -77,7 +77,7 @@ const saveVehicle = async () => {
     };
 
     // Send the API request
-    const response = await api.post('https://app.trackswiftly.com/vehicles', vehicleData, {
+    const response = await api.post('https://app.trackswiftly.com/vehicles', [vehicleData], {
       headers: {
         'Accept': '*/*',
         'Content-Type': 'application/json'
@@ -220,7 +220,7 @@ const openAddVehicleDrawer = async () => {
   isAddVehicleDrawer.value = true 
 
 }
-
+ 
 
 </script>
 
