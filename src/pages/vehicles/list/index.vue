@@ -2,11 +2,12 @@
 import { VDataTableServer } from 'vuetify/labs/VDataTable'
 import { paginationMeta } from '@api-utils/paginationMeta'
 import type { VForm } from 'vuetify/components/VForm'
+import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 
 import api from '@/utils/axios'
 
 const headers = [
-  { title: 'Matricule', key: 'matricule' },
+  { title: 'Plate', key: 'matricule' },
   { title: 'Type', key: 'type' },
   { title: 'Group', key: 'group' },
   { title: 'Model', key: 'model' },
@@ -23,8 +24,23 @@ const isVehicleDialogDrawer = ref(false)
 
 const isAddVehicleDrawer = ref(false)
 
+
+const models = ref([]);
+const groups = ref([]);
+const types = ref([]);
+
+
+//Add Vehicle refs
 const isFormValid = ref(false)
 const refForm = ref<VForm>()
+
+const licensePlate = ref('')
+const vin = ref('')
+const mileage = ref('')
+const purchaseDate = ref('')
+const type = ref()
+const model = ref()
+const group = ref()
 
 // Data table options
 const itemsPerPage = ref(10)
@@ -32,12 +48,91 @@ const page = ref(1)
 const sortBy = ref()
 const orderBy = ref()
 
-const onSubmit = () => {
+const onSubmit = async () => {
+  const { valid } = await refForm.value?.validate(); // Wait for validation to complete
+  if (valid) {
+    await saveVehicle(); // Proceed with saving the vehicle
+  } else {
+    console.log("Form is not valid");
+  }
+};
 
+const saveVehicle = async () => {
+  try {
+
+    let formattedPurchaseDate = null;
+    if (purchaseDate.value) {
+      formattedPurchaseDate = new Date(purchaseDate.value).toISOString();
+    }
+
+
+    const vehicleData = {
+      vin: vin.value,
+      licensePlate: licensePlate.value,
+      mileage: Number(mileage.value),
+      purchaseDate: formattedPurchaseDate,
+      vehicleTypeId: type.value, 
+      modelId: model.value, 
+      vehicleGroupId: group.value  
+    };
+
+    // Send the API request
+    const response = await api.post('https://app.trackswiftly.com/vehicles', vehicleData, {
+      headers: {
+        'Accept': '*/*',
+        'Content-Type': 'application/json'
+      }
+    });
+
+    console.log('Vehicle saved successfully:', response.data);
+  } catch (error) {
+    console.error('Error saving vehicle:', error.response?.data || error.message);
+  }
+};
+
+const getModels = async () => {
+  try {
+    const response = await api.get(`https://app.trackswiftly.com/models?page=${page.value - 1}&pageSize=${itemsPerPage.value}`, {
+      headers: {
+        'Accept': '*/*',
+      }
+    });
+
+    return response.data.content
+  } catch (error) {
+    console.error("Error fetching models:", error.response?.data || error.message);
+  }
+
+
+
+  
 }
+const getTypes = async () => {
+  try {
+    const response = await api.get(`https://app.trackswiftly.com/types?page=${page.value - 1}&pageSize=${itemsPerPage.value}`, {
+      headers: {
+        'Accept': '*/*',
+      }
+    });
 
+    return response.data.content
+  } catch (error) {
+    console.error("Error fetching types:", error.response?.data || error.message);
+  }
+}
+const getGroups= async () => {
+  try {
+    const response = await api.get(`https://app.trackswiftly.com/groups?page=${page.value - 1}&pageSize=${itemsPerPage.value}`, {
+      headers: {
+        'Accept': '*/*',
+      }
+    });
 
-
+    return response.data.content
+  } catch (error) {
+    console.error("Error fetching groups:", error.response?.data || error.message);
+  }
+}
 
 const getVehicle = async (id: number) => {
   try {
@@ -54,7 +149,7 @@ const getVehicle = async (id: number) => {
 
 
   } catch (error) {
-    console.error("Error fetching users:", error.response?.data || error.message);
+    console.error("Error fetching vehicle:", error.response?.data || error.message);
 
 
   }
@@ -78,7 +173,7 @@ const getVehicles = async () => {
 
 
   } catch (error) {
-    console.error("Error fetching users:", error.response?.data || error.message);
+    console.error("Error fetching vehicles:", error.response?.data || error.message);
 
 
   }
@@ -98,6 +193,32 @@ const openVehicleDrawer = async (id: number) => {
   console.log('Fetching vehicle:', id)
   await getVehicle(id)
   isVehicleDialogDrawer.value = true
+}
+
+const openAddVehicleDrawer = async () => {
+
+  const fetchedModels = await getModels();
+
+
+  models.value = fetchedModels.map(model => ({
+    title: model.name,
+    value: model.id
+  }))
+
+  const fetchedGroups = await getGroups();
+  groups.value = fetchedGroups.map(group => ({
+    title: group.name,
+    value: group.id
+  }))
+
+  const fetchedTypes = await getTypes();
+  types.value = fetchedTypes.map(type => ({
+    title: type.name,
+    value: type.id,
+  }));
+
+  isAddVehicleDrawer.value = true 
+
 }
 
 
@@ -126,9 +247,108 @@ const openVehicleDrawer = async (id: number) => {
           <!-- 👉 Form -->
           <VForm
             ref="refForm"
+
             v-model="isFormValid"
             @submit.prevent="onSubmit"
           >
+
+          <VRow>
+              <!-- 👉 VIN -->
+              <VCol cols="12">
+                <AppTextField
+                  v-model="vin"
+                  :rules="[requiredValidator]"
+                  label="VIN"
+                  placeholder="SAJWJ1CD4F8597404"
+                />
+              </VCol>
+
+              <!-- 👉 License Plate -->
+              <VCol cols="12">
+                <AppTextField
+                  v-model="licensePlate"
+                  :rules="[requiredValidator]"
+                  label="License Plate"
+                  placeholder="81-063-5933"
+                />
+              </VCol>
+
+              <!-- 👉 Mileage -->
+              <VCol cols="12">
+                <AppTextField
+                  v-model="mileage"
+                  :rules="[requiredValidator, numberValidator, positiveNumberValidator]"
+                  label="Mileage (km)"
+                  placeholder="5000"
+                  type="number"  
+                  min="0"
+
+                />
+              </VCol>
+
+              <!-- 👉 Purchase Date -->
+              <VCol cols="12">
+                <AppDateTimePicker
+                  v-model="purchaseDate"
+                  label="Purchase Date"
+                  placeholder="2025-02-21"
+                />
+              </VCol>
+
+              <!-- 👉 Type -->
+              <VCol cols="12">
+                <AppSelect
+                  v-model="type"
+                  label="Select Type"
+                  placeholder="Select Type"
+                  :rules="[requiredValidator]"
+                  :items="types"
+                />
+              </VCol>
+
+
+              <!-- 👉 Model -->
+              <VCol cols="12">
+                <AppSelect
+                  v-model="model"
+                  label="Select Model"
+                  placeholder="Select Model"
+                  :rules="[requiredValidator]"
+                  :items="models"
+                />
+              </VCol>
+
+              <!-- 👉 Group -->
+              <VCol cols="12">
+                <AppSelect
+                  v-model="group"
+                  label="Select Group"
+                  placeholder="Select Group"
+                  :rules="[requiredValidator]"
+                  :items="groups"
+                />
+              </VCol>
+
+
+
+              <!-- 👉 Submit and Cancel -->
+              <VCol cols="12">
+                <VBtn
+                  type="submit"
+                  class="me-3"
+                >
+                  Submit
+                </VBtn>
+                <VBtn
+                  type="reset"
+                  variant="outlined"
+                  color="secondary"
+                  @click="isAddVehicleDrawer = false"
+                >
+                  Cancel
+                </VBtn>
+              </VCol>
+            </VRow>
 
           </VForm>
         </VCardText>
@@ -169,7 +389,7 @@ const openVehicleDrawer = async (id: number) => {
         <!-- 👉 Invite user button -->
         <VBtn
           prepend-icon="tabler-category-plus"
-          @click="isAddVehicleDrawer = true"
+          @click="openAddVehicleDrawer"
         >
         Add Vehicle
       </VBtn>

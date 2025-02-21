@@ -103,3 +103,40 @@ export const alphaDashValidator = (value: unknown) => {
 
   return /^[0-9A-Z_-]*$/i.test(valueAsString) || 'All Character are not valid'
 }
+
+// 👉 Number Validator
+
+export const numberValidator = (value: unknown) => {
+  if (isEmpty(value)) return true;
+
+  return !isNaN(Number(value)) || 'This field must be a valid number';
+};
+
+
+// 👉 Date Validator (YYYY-MM-DD format)
+export const dateValidator = (value: unknown) => {
+  if (isEmpty(value)) return true;
+
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(String(value))) return 'Date must be in the format YYYY-MM-DD';
+
+  const date = new Date(String(value));
+  const [year, month, day] = String(value).split('-').map(Number);
+
+  if (date.getFullYear() !== year || date.getMonth() + 1 !== month || date.getDate() !== day) {
+    return 'Invalid date';
+  }
+
+  return true;
+};
+
+
+// 👉 Positive Number Validator
+export const positiveNumberValidator = (value: unknown) => {
+  if (isEmpty(value)) return true;
+
+  return /^-?\d+(\.\d+)?$/.test(String(value)) && Number(value) > 0 
+    ? true 
+    : 'This field must be a positive number';
+};
+
