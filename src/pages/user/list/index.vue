@@ -213,8 +213,10 @@ const getUser = async (id: number) => {
            
       }
     });
+    console.log(response.data);
 
     userData.value = response.data; 
+
     return response.data;
 
 

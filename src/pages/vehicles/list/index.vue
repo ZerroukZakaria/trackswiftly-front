@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { VDataTableServer } from 'vuetify/labs/VDataTable'
 import { paginationMeta } from '@api-utils/paginationMeta'
-import type { VForm } from 'vuetify/components/VForm'
-import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 import Swal from 'sweetalert2'
+import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
+import type { VForm } from 'vuetify/components/VForm'
+import { VDataTableServer } from 'vuetify/labs/VDataTable'
 
 import api from '@/utils/axios'
 
@@ -20,7 +20,8 @@ const headers = [
 // 👉 Store
 const searchQuery = ref('')
 const vehicles = ref([]) 
-const vehicle = ref('')
+
+const vehicle = ref({})
 const totalVehicles = ref(0) 
 const isVehicleDialogDrawer = ref(false)
 
@@ -163,10 +164,11 @@ const getVehicle = async (id: number) => {
       }
     });
 
-    
-    vehicle.value = response.data
+    vehicle.value = response.data[0]
+
     console.log(vehicle.value);
-    
+    return vehicle.value;    
+
 
 
   } catch (error) {
@@ -189,8 +191,6 @@ const getVehicles = async () => {
     
     vehicles.value = response.data.content
     totalVehicles.value = response.data.totalElements 
-
-    console.log(vehicles.value);
 
 
   } catch (error) {
@@ -307,6 +307,8 @@ const openAddVehicleDrawer = async () => {
 
 <template>
 
+
+    <!-- 👉 Add new vehicle-->
     <VNavigationDrawer
       v-model="isAddVehicleDrawer"
       temporary
@@ -437,6 +439,141 @@ const openAddVehicleDrawer = async () => {
 
     </VNavigationDrawer>
 
+
+    <!-- 👉 Edit new vehicle-->
+
+    <VNavigationDrawer
+      v-model="isVehicleDialogDrawer"
+      temporary
+      :width="400"
+      location="end"
+      class="scrollable-content"
+    >
+
+        <!-- 👉 Title -->
+    <AppDrawerHeaderSection
+      title="Update Vehicle"
+      @cancel="isVehicleDialogDrawer = false"
+    />
+
+    <PerfectScrollbar :options="{ wheelPropagation: false }">
+      <VCard flat>
+        <VCardText>
+          <!-- 👉 Form -->
+          <VForm
+            ref="refForm"
+            :vehicle-data="vehicle"
+            v-model="isFormValid"
+            @submit.prevent="onSubmit"
+          >
+
+          <VRow>
+              <!-- 👉 VIN -->
+              <VCol cols="12">
+                <AppTextField
+                  v-model="vehicle.vin"
+                  :rules="[requiredValidator]"
+                  label="VIN"
+                  placeholder="SAJWJ1CD4F8597404"
+                />
+              </VCol>
+
+              <!-- 👉 License Plate -->
+              <VCol cols="12">
+                <AppTextField
+                  v-model="vehicle.licensePlate"
+                  :rules="[requiredValidator]"
+                  label="License Plate"
+                  placeholder="81-063-5933"
+                />
+              </VCol>
+
+              <!-- 👉 Mileage -->
+              <VCol cols="12">
+                <AppTextField
+                  v-model="vehicle.mileage"
+                  :rules="[requiredValidator, numberValidator, positiveNumberValidator]"
+                  label="Mileage (km)"
+                  placeholder="5000"
+                  type="number"  
+                  min="0"
+
+                />
+              </VCol>
+
+              <!-- 👉 Purchase Date -->
+              <VCol cols="12">
+                <AppDateTimePicker
+                  v-model="vehicle.purchaseDate"
+                  label="Purchase Date"
+                  placeholder="2025-02-22"
+                />
+              </VCol>
+
+              <!-- 👉 Type -->
+              <VCol cols="12">
+                <AppSelect
+                  v-model="type"
+                  label="Select Type"
+                  placeholder="Select Type"
+                  :rules="[requiredValidator]"
+                  :items="types"
+                />
+              </VCol>
+
+
+              <!-- 👉 Model -->
+              <VCol cols="12">
+                <AppSelect
+                  v-model="model"
+                  label="Select Model"
+                  placeholder="Select Model"
+                  :rules="[requiredValidator]"
+                  :items="models"
+                />
+              </VCol>
+
+              <!-- 👉 Group -->
+              <VCol cols="12">
+                <AppSelect
+                  v-model="vehicle.group"
+                  label="Select Group"
+                  placeholder="Select Group"
+                  :rules="[requiredValidator]"
+                  :items="groups"
+                />
+              </VCol>
+
+
+
+              <!-- 👉 Submit and Cancel -->
+              <VCol cols="12">
+                <VBtn
+                  type="submit"
+                  class="me-3"
+                >
+                  Submit
+                </VBtn>
+                <VBtn
+                  type="reset"
+                  variant="outlined"
+                  color="secondary"
+                  @click="isAddVehicleDrawer = false"
+                >
+                  Cancel
+                </VBtn>
+              </VCol>
+            </VRow>
+
+          </VForm>
+        </VCardText>
+      </VCard>
+    </PerfectScrollbar>
+
+    </VNavigationDrawer>
+
+
+
       <VCard>
       <VCardText class="d-flex flex-wrap py-4 gap-4">
         <div class="me-3 d-flex gap-3">
@@ -495,7 +632,6 @@ const openAddVehicleDrawer = async () => {
         <template #item.plate="{ item }">
           <div class="d-flex align-center">
             <VAvatar
-              @click="openVehicleDrawer(item.id)"
               size="34"
               :variant="!item.avatar ? 'tonal' : undefined"
               :color="!item.avatar ? 'info' : undefined"
@@ -512,7 +648,6 @@ const openAddVehicleDrawer = async () => {
               <h6 class="text-base">
                 <span
                   class="cursor-pointer over:opacity-80 transition duration-200 font-weight-medium text-link"
-                  @click="openVehicleDrawer(item.id)"
                 >
                   {{ item.licensePlate }}
                 </span>
@@ -527,7 +662,7 @@ const openAddVehicleDrawer = async () => {
         <template #item.mileage="{ item }">
           <div class="d-flex align-center gap-4">
 
-            <span>{{ item.mileage }}</span>
+            <span>{{ item.mileage }} km</span>
           </div>
         </template>
 
@@ -564,7 +699,7 @@ const openAddVehicleDrawer = async () => {
 
 
                     <!-- edit user role -->
-        <IconBtn @click="openVehicleDrawer(item)">
+        <IconBtn @click="openVehicleDrawer(item.id)">
           <VIcon icon="tabler-edit" />
         </IconBtn>
 
