@@ -3,11 +3,13 @@ import { VDataTableServer } from 'vuetify/labs/VDataTable'
 import { paginationMeta } from '@api-utils/paginationMeta'
 import type { VForm } from 'vuetify/components/VForm'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
+import Swal from 'sweetalert2'
 
 import api from '@/utils/axios'
 
 const headers = [
-  { title: 'Plate', key: 'matricule' },
+  { title: 'Plate', key: 'plate' },
+  { title: 'Mileage', key: 'mileage' },
   { title: 'Type', key: 'type' },
   { title: 'Group', key: 'group' },
   { title: 'Model', key: 'model' },
@@ -51,7 +53,9 @@ const orderBy = ref()
 const onSubmit = async () => {
   const { valid } = await refForm.value?.validate(); // Wait for validation to complete
   if (valid) {
-    await saveVehicle(); // Proceed with saving the vehicle
+    await saveVehicle();
+    getVehicles();
+    
   } else {
     console.log("Form is not valid");
   }
@@ -84,6 +88,21 @@ const saveVehicle = async () => {
       }
     });
 
+
+    Swal.fire({
+        icon: "success",
+        title: "Success!",
+        text: `Vehicle added successfully.`,
+        didOpen: () => {
+        document.querySelector('.swal2-confirm').style.color = 'white';
+      }
+     });
+
+
+     isAddVehicleDrawer.value = false;
+
+
+
     console.log('Vehicle saved successfully:', response.data);
   } catch (error) {
     console.error('Error saving vehicle:', error.response?.data || error.message);
@@ -101,6 +120,8 @@ const getModels = async () => {
     return response.data.content
   } catch (error) {
     console.error("Error fetching models:", error.response?.data || error.message);
+
+
   }
 
 
@@ -174,11 +195,68 @@ const getVehicles = async () => {
 
   } catch (error) {
     console.error("Error fetching vehicles:", error.response?.data || error.message);
-
-
   }
 };
 getVehicles();
+
+
+const deleteVehicle = async (id: number) => {
+
+
+    
+  const result = await Swal.fire({
+    title: `Are you sure?`,
+    text: `Do you really want to delete this unit?`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#6c757d",
+    confirmButtonText: "Yes, delete it!",
+    cancelButtonText: "Cancel",
+    didOpen: () => {
+        document.querySelector('.swal2-confirm').style.color = 'white';
+        document.querySelector('.swal2-cancel').style.color = 'white';
+
+    }
+  });
+
+  if(result.isConfirmed) {
+      try {
+      await api.delete(`https://app.trackswiftly.com/vehicles/${id}`, {
+        headers: {
+          'Accept': '*/*',
+        }
+      });
+
+
+      Swal.fire({
+          icon: "success",
+          title: "Success!",
+          text: `Vehicle deleted successfully.`,
+          didOpen: () => {
+          document.querySelector('.swal2-confirm').style.color = 'white';
+        }
+      });
+
+    getVehicles();
+
+
+    } catch (error) {
+      console.error("Error fetching vehicles:", error.response?.data || error.message);
+
+      Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Failed to delete the vehicle. Please try again.",
+          didOpen: () => {
+          document.querySelector('.swal2-confirm').style.color = 'white';
+        }
+      });
+    }
+  }
+  
+
+}
 
 
 
@@ -187,6 +265,7 @@ const updateOptions = (options: any) => {
   page.value = options.page
   sortBy.value = options.sortBy[0]?.key
   orderBy.value = options.sortBy[0]?.order
+  getVehicles()
 }
 
 const openVehicleDrawer = async (id: number) => {
@@ -221,6 +300,7 @@ const openAddVehicleDrawer = async () => {
 
 }
  
+
 
 </script>
 
@@ -412,12 +492,14 @@ const openAddVehicleDrawer = async () => {
         @update:options="updateOptions"
       >
         <!-- 👉 Vehicle -->
-        <template #item.matricule="{ item }">
+        <template #item.plate="{ item }">
           <div class="d-flex align-center">
             <VAvatar
               @click="openVehicleDrawer(item.id)"
               size="34"
               :variant="!item.avatar ? 'tonal' : undefined"
+              :color="!item.avatar ? 'info' : undefined"
+
               class=" cursor-pointer over:opacity-80 transition duration-200 me-3"
             >
               <VImg
@@ -435,8 +517,17 @@ const openAddVehicleDrawer = async () => {
                   {{ item.licensePlate }}
                 </span>
               </h6>
-              <!-- <span class="text-sm text-medium-emphasis">{{ item.licensePlate }}</span> -->
+              <span class="text-sm text-medium-emphasis">{{ item.vin }}</span>
             </div>
+          </div>
+        </template>
+
+
+                <!-- 👉 Mileage -->
+        <template #item.mileage="{ item }">
+          <div class="d-flex align-center gap-4">
+
+            <span>{{ item.mileage }}</span>
           </div>
         </template>
 
@@ -471,8 +562,14 @@ const openAddVehicleDrawer = async () => {
         <!-- 👉 Actions -->
         <template #item.actions="{ item }">
 
+
+                    <!-- edit user role -->
+        <IconBtn @click="openVehicleDrawer(item)">
+          <VIcon icon="tabler-edit" />
+        </IconBtn>
+
           <!-- delete user  -->
-          <IconBtn @click="">
+          <IconBtn @click="deleteVehicle(item.id)">
             <VIcon icon="tabler-trash" />
           </IconBtn>
 
