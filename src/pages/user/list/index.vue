@@ -167,8 +167,12 @@ const getUsers = async () => {
 
   }
 };
-getUsers();
 
+
+onMounted(() => {
+  getUsers();
+
+})
 
 // 👉 Get Roles
 const getRoles = async() => {

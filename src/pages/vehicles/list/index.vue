@@ -197,8 +197,12 @@ const getVehicles = async () => {
     console.error("Error fetching vehicles:", error.response?.data || error.message);
   }
 };
-getVehicles();
 
+
+onMounted(() => {
+  getVehicles();
+
+})
 
 const deleteVehicle = async (id: number) => {
 
@@ -671,7 +675,7 @@ const openAddVehicleDrawer = async () => {
         <template #item.type="{ item }">
           <div class="d-flex align-center gap-4">
 
-            <span>{{ item.vehicleType.name }}</span>
+            <span class="badge bg-success text-dark border border-dark rounded-1 px-2 py-1" style="border-radius: 6px;">{{ item.vehicleType.name }}</span>
           </div>
         </template>
 
@@ -679,7 +683,7 @@ const openAddVehicleDrawer = async () => {
         <template #item.group="{ item }">
           <div class="d-flex align-center gap-4">
 
-            <span>{{ item.vhicleGroup.name }}</span>
+            <span class="badge bg-warning text-dark border border-dark rounded-1 px-2 py-1" style="border-radius: 6px;">{{ item.vhicleGroup.name }}</span>
           </div>
         </template>
 
@@ -687,7 +691,7 @@ const openAddVehicleDrawer = async () => {
         <!-- 👉 Model -->
         <template #item.model="{ item }">
           <div class="d-flex align-center gap-4">
-            <span>{{ item.model.name }}</span>
+            <span class="badge bg-info text-dark border border-dark rounded-1 px-2 py-1" style="border-radius: 6px;">{{ item.model.name }}</span>
           </div>
         </template>
 
