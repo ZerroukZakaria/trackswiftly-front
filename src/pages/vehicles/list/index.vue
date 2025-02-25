@@ -17,11 +17,35 @@ const headers = [
 
 ]
 
+
+const typeHeaders = [
+  { title: 'Name', key: 'name' },
+  { title: 'Description', key: 'description' },
+  { title: 'Actions', key: 'actions', sortable: false },
+]
+const modelHeaders = [
+
+]
+const groupHeaders = [
+  { title: 'Name', key: 'name' },
+  { title: 'Description', key: 'description' },
+  { title: 'Actions', key: 'actions', sortable: false },
+]
+
+
+
+
+const currentTab = ref('vehicles')
+
+
+
 // 👉 Store
 const searchQuery = ref('')
 const vehicles = ref([]) 
-
 const vehicle = ref({})
+
+
+
 const totalVehicles = ref(0) 
 const isVehicleDialogDrawer = ref(false)
 
@@ -31,6 +55,11 @@ const isAddVehicleDrawer = ref(false)
 const models = ref([]);
 const groups = ref([]);
 const types = ref([]);
+
+const vehicleModels = ref([]);
+const vehicleGroups = ref([]);
+const vehicleTypes = ref([]);
+
 
 
 //Add Vehicle refs
@@ -50,6 +79,15 @@ const itemsPerPage = ref(10)
 const page = ref(1)
 const sortBy = ref()
 const orderBy = ref()
+
+
+onMounted(() => {
+  getVehicles();
+  getTypes();
+  getModels();
+  getGroups();
+})
+
 
 const onSubmit = async () => {
   const { valid } = await refForm.value?.validate(); // Wait for validation to complete
@@ -110,6 +148,94 @@ const saveVehicle = async () => {
   }
 };
 
+
+const addVehicleType = async () => {
+
+
+  const typeData = {
+    name: '',
+    description: ''
+  };
+  
+
+  const response = await api.post('https://app.trackswiftly.com/types', [typeData], {
+      headers: {
+        'Accept': '*/*',
+        'Content-Type': 'application/json'
+      }
+    });
+
+
+  Swal.fire({
+      icon: "success",
+      title: "Success!",
+      text: `Type added successfully.`,
+      didOpen: () => {
+      document.querySelector('.swal2-confirm').style.color = 'white';
+    }
+    });
+
+}
+
+const addVehicleModel = async () => {
+  const modelData = {
+    name: '',
+    make: "",
+    year: "",
+    engineType: "",
+    fuelType: "",
+    transmission: "",
+    maxPayloadWeight: 0,
+    maxVolume: 0  };
+  
+
+  const response = await api.post('https://app.trackswiftly.com/models', [modelData], {
+      headers: {
+        'Accept': '*/*',
+        'Content-Type': 'application/json'
+      }
+    });
+
+
+  Swal.fire({
+      icon: "success",
+      title: "Success!",
+      text: `Model added successfully.`,
+      didOpen: () => {
+      document.querySelector('.swal2-confirm').style.color = 'white';
+    }
+    });
+}
+
+const addVehicleGroup = async () => {
+  
+  const groupData = {
+    name: '',
+    description: ''
+  };
+  
+
+  const response = await api.post('https://app.trackswiftly.com/groups', [groupData], {
+      headers: {
+        'Accept': '*/*',
+        'Content-Type': 'application/json'
+      }
+    });
+
+
+  Swal.fire({
+      icon: "success",
+      title: "Success!",
+      text: `Type added successfully.`,
+      didOpen: () => {
+      document.querySelector('.swal2-confirm').style.color = 'white';
+    }
+    });
+}
+
+
+
+
 const getModels = async () => {
   try {
     const response = await api.get(`https://app.trackswiftly.com/models?page=${page.value - 1}&pageSize=${itemsPerPage.value}`, {
@@ -117,6 +243,8 @@ const getModels = async () => {
         'Accept': '*/*',
       }
     });
+
+    models.value = response.data.content
 
     return response.data.content
   } catch (error) {
@@ -137,11 +265,14 @@ const getTypes = async () => {
       }
     });
 
+    types.value = response.data.content
+
     return response.data.content
   } catch (error) {
     console.error("Error fetching types:", error.response?.data || error.message);
   }
 }
+
 const getGroups= async () => {
   try {
     const response = await api.get(`https://app.trackswiftly.com/groups?page=${page.value - 1}&pageSize=${itemsPerPage.value}`, {
@@ -150,11 +281,174 @@ const getGroups= async () => {
       }
     });
 
+
+    groups.value = response.data.content
+
     return response.data.content
   } catch (error) {
     console.error("Error fetching groups:", error.response?.data || error.message);
   }
 }
+
+const deleteModel = async (id: number) => {
+  const result = await Swal.fire({
+    title: `Are you sure?`,
+    text: `Do you really want to delete this model?`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#6c757d",
+    confirmButtonText: "Yes, delete it!",
+    cancelButtonText: "Cancel",
+    didOpen: () => {
+        document.querySelector('.swal2-confirm').style.color = 'white';
+        document.querySelector('.swal2-cancel').style.color = 'white';
+
+    }
+  });
+
+  if(result.isConfirmed) {
+      try {
+      await api.delete(`https://app.trackswiftly.com/models/${id}`, {
+        headers: {
+          'Accept': '*/*',
+        }
+      });
+
+
+      Swal.fire({
+          icon: "success",
+          title: "Success!",
+          text: `Model deleted successfully.`,
+          didOpen: () => {
+          document.querySelector('.swal2-confirm').style.color = 'white';
+        }
+      });
+
+    getModels();
+
+
+    } catch (error) {
+      console.error("Error fetching vehicles:", error.response?.data || error.message);
+
+      Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Failed to delete the model. Please try again.",
+          didOpen: () => {
+          document.querySelector('.swal2-confirm').style.color = 'white';
+        }
+      });
+    }
+  }
+}
+
+const deleteType = async (id: number) => {
+  const result = await Swal.fire({
+    title: `Are you sure?`,
+    text: `Do you really want to delete this type?`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#6c757d",
+    confirmButtonText: "Yes, delete it!",
+    cancelButtonText: "Cancel",
+    didOpen: () => {
+        document.querySelector('.swal2-confirm').style.color = 'white';
+        document.querySelector('.swal2-cancel').style.color = 'white';
+
+    }
+  });
+
+  if(result.isConfirmed) {
+      try {
+      await api.delete(`https://app.trackswiftly.com/types/${id}`, {
+        headers: {
+          'Accept': '*/*',
+        }
+      });
+
+
+      Swal.fire({
+          icon: "success",
+          title: "Success!",
+          text: `Type deleted successfully.`,
+          didOpen: () => {
+          document.querySelector('.swal2-confirm').style.color = 'white';
+        }
+      });
+
+    getTypes();
+
+
+    } catch (error) {
+      console.error("Error fetching vehicles:", error.response?.data || error.message);
+
+      Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Failed to delete the type. Please try again.",
+          didOpen: () => {
+          document.querySelector('.swal2-confirm').style.color = 'white';
+        }
+      });
+    }
+  }
+}
+
+const deleteGroup = async (id: number) => {
+  const result = await Swal.fire({
+    title: `Are you sure?`,
+    text: `Do you really want to delete this group?`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#6c757d",
+    confirmButtonText: "Yes, delete it!",
+    cancelButtonText: "Cancel",
+    didOpen: () => {
+        document.querySelector('.swal2-confirm').style.color = 'white';
+        document.querySelector('.swal2-cancel').style.color = 'white';
+
+    }
+  });
+
+  if(result.isConfirmed) {
+      try {
+      await api.delete(`https://app.trackswiftly.com/groups/${id}`, {
+        headers: {
+          'Accept': '*/*',
+        }
+      });
+
+
+      Swal.fire({
+          icon: "success",
+          title: "Success!",
+          text: `Group deleted successfully.`,
+          didOpen: () => {
+          document.querySelector('.swal2-confirm').style.color = 'white';
+        }
+      });
+
+    getGroups();
+
+
+    } catch (error) {
+      console.error("Error fetching vehicles:", error.response?.data || error.message);
+
+      Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Failed to delete the group. Please try again.",
+          didOpen: () => {
+          document.querySelector('.swal2-confirm').style.color = 'white';
+        }
+      });
+    }
+  }
+}
+
 
 const getVehicle = async (id: number) => {
   try {
@@ -197,12 +491,6 @@ const getVehicles = async () => {
     console.error("Error fetching vehicles:", error.response?.data || error.message);
   }
 };
-
-
-onMounted(() => {
-  getVehicles();
-
-})
 
 const deleteVehicle = async (id: number) => {
 
@@ -262,8 +550,6 @@ const deleteVehicle = async (id: number) => {
 
 }
 
-
-
 // Update data table options
 const updateOptions = (options: any) => {
   page.value = options.page
@@ -282,20 +568,19 @@ const openAddVehicleDrawer = async () => {
 
   const fetchedModels = await getModels();
 
-
-  models.value = fetchedModels.map(model => ({
+  vehicleModels.value = fetchedModels.map(model => ({
     title: model.name,
     value: model.id
   }))
 
   const fetchedGroups = await getGroups();
-  groups.value = fetchedGroups.map(group => ({
+  vehicleGroups.value = fetchedGroups.map(group => ({
     title: group.name,
     value: group.id
   }))
 
   const fetchedTypes = await getTypes();
-  types.value = fetchedTypes.map(type => ({
+  vehicleTypes.value = fetchedTypes.map(type => ({
     title: type.name,
     value: type.id,
   }));
@@ -388,7 +673,7 @@ const openAddVehicleDrawer = async () => {
                   label="Select Type"
                   placeholder="Select Type"
                   :rules="[requiredValidator]"
-                  :items="types"
+                  :items="vehicleTypes"
                 />
               </VCol>
 
@@ -400,7 +685,7 @@ const openAddVehicleDrawer = async () => {
                   label="Select Model"
                   placeholder="Select Model"
                   :rules="[requiredValidator]"
-                  :items="models"
+                  :items="vehicleModels"
                 />
               </VCol>
 
@@ -411,7 +696,7 @@ const openAddVehicleDrawer = async () => {
                   label="Select Group"
                   placeholder="Select Group"
                   :rules="[requiredValidator]"
-                  :items="groups"
+                  :items="vehicleGroups"
                 />
               </VCol>
 
@@ -521,7 +806,7 @@ const openAddVehicleDrawer = async () => {
                   label="Select Type"
                   placeholder="Select Type"
                   :rules="[requiredValidator]"
-                  :items="types"
+                  :items="vehicleTypes"
                 />
               </VCol>
 
@@ -533,7 +818,7 @@ const openAddVehicleDrawer = async () => {
                   label="Select Model"
                   placeholder="Select Model"
                   :rules="[requiredValidator]"
-                  :items="models"
+                  :items="vehicleModels"
                 />
               </VCol>
 
@@ -544,7 +829,7 @@ const openAddVehicleDrawer = async () => {
                   label="Select Group"
                   placeholder="Select Group"
                   :rules="[requiredValidator]"
-                  :items="groups"
+                  :items="vehicleGroups"
                 />
               </VCol>
 
@@ -577,181 +862,704 @@ const openAddVehicleDrawer = async () => {
     </VNavigationDrawer>
 
 
+    <VCard class="pa-4">
+      <div class="custom-tabs">
+        <VTabs
+          v-model="currentTab"
+          class="v-tabs-pill"
+          border
+        >
+        <VTab>Vehicles</VTab>
+        <VTab>Types</VTab>
+        <VTab>Models</VTab>
+        <VTab>Groups</VTab>
+        </VTabs>
+      </div>
+    </VCard>
 
-      <VCard>
-      <VCardText class="d-flex flex-wrap py-4 gap-4">
-        <div class="me-3 d-flex gap-3">
-          <AppSelect
-            :model-value="itemsPerPage"
-            :items="[
-              { value: 10, title: '10' },
-              { value: 25, title: '25' },
-              { value: 50, title: '50' },
-              { value: 100, title: '100' },
-              { value: -1, title: 'All' },
-            ]"
-            style="inline-size: 6.25rem;"
-            @update:model-value="itemsPerPage = parseInt($event, 10)"
-          />
-        </div>
-        <VSpacer />
 
-        <div class="app-user-search-filter d-flex align-center flex-wrap gap-4">
-          <!-- 👉 Search  -->
-          <div style="inline-size: 10rem;">
-            <AppTextField
-              v-model="searchQuery"
-              placeholder="Search"
-              density="compact"
+    <VWindow v-model="currentTab">
+      <VWindowItem value ="vehicles">
+        <VCard>
+        <VCardText class="d-flex flex-wrap py-4 gap-4">
+          <div class="me-3 d-flex gap-3">
+            <AppSelect
+              :model-value="itemsPerPage"
+              :items="[
+                { value: 10, title: '10' },
+                { value: 25, title: '25' },
+                { value: 50, title: '50' },
+                { value: 100, title: '100' },
+                { value: -1, title: 'All' },
+              ]"
+              style="inline-size: 6.25rem;"
+              @update:model-value="itemsPerPage = parseInt($event, 10)"
             />
           </div>
-        </div>
+          <VSpacer />
 
-        <!-- 👉 Invite user button -->
-        <VBtn
-          prepend-icon="tabler-category-plus"
-          @click="openAddVehicleDrawer"
-        >
-        Add Vehicle
-      </VBtn>
-
-      </VCardText>
-
-
-      
-
-      <VDivider />
-
-      <!-- SECTION datatable -->
-      <VDataTableServer
-        v-model:items-per-page="itemsPerPage"
-        v-model:page="page"
-        :items="vehicles"
-        :items-length="totalVehicles"
-        :headers="headers"
-        class="text-no-wrap"
-        @update:options="updateOptions"
-      >
-        <!-- 👉 Vehicle -->
-        <template #item.plate="{ item }">
-          <div class="d-flex align-center">
-            <VAvatar
-              size="34"
-              :variant="!item.avatar ? 'tonal' : undefined"
-              :color="!item.avatar ? 'info' : undefined"
-
-              class=" cursor-pointer over:opacity-80 transition duration-200 me-3"
-            >
-              <VImg
-                v-if="item.avatar"
-                :src="item.avatar"
+          <div class="app-user-search-filter d-flex align-center flex-wrap gap-4">
+            <!-- 👉 Search  -->
+            <div style="inline-size: 10rem;">
+              <AppTextField
+                v-model="searchQuery"
+                placeholder="Search"
+                density="compact"
               />
-              <span v-else>{{ avatarText(item.licensePlate) }}</span>
-            </VAvatar>
-            <div class="d-flex flex-column">
-              <h6 class="text-base">
-                <span
-                  class="cursor-pointer over:opacity-80 transition duration-200 font-weight-medium text-link"
-                >
-                  {{ item.licensePlate }}
-                </span>
-              </h6>
-              <span class="text-sm text-medium-emphasis">{{ item.vin }}</span>
             </div>
           </div>
-        </template>
+
+          <!-- 👉 Add Vehicle button -->
+          <VBtn
+            prepend-icon="tabler-category-plus"
+            @click="openAddVehicleDrawer"
+          >
+          Add Vehicle
+        </VBtn>
+
+        </VCardText>
+        <VDivider />
+
+        <!-- SECTION datatable -->
+        <VDataTableServer
+          v-model:items-per-page="itemsPerPage"
+          v-model:page="page"
+          :items="vehicles"
+          :items-length="totalVehicles"
+          :headers="headers"
+          class="text-no-wrap"
+          @update:options="updateOptions"
+        >
+          <!-- 👉 Vehicle -->
+          <template #item.plate="{ item }">
+            <div class="d-flex align-center">
+              <VAvatar
+                size="34"
+                :variant="!item.avatar ? 'tonal' : undefined"
+                :color="!item.avatar ? 'primary' : undefined"
+
+                class=" cursor-pointer over:opacity-80 transition duration-200 me-3"
+              >
+                <VImg
+                  v-if="item.avatar"
+                  :src="item.avatar"
+                />
+                <span v-else>{{ avatarText(item.licensePlate) }}</span>
+              </VAvatar>
+              <div class="d-flex flex-column">
+                <h6 class="text-base">
+                  <span
+                    class="cursor-pointer over:opacity-80 transition duration-200 font-weight-medium text-link"
+                  >
+                    {{ item.licensePlate }}
+                  </span>
+                </h6>
+                <span class="text-sm text-medium-emphasis">{{ item.vin }}</span>
+              </div>
+            </div>
+          </template>
 
 
-                <!-- 👉 Mileage -->
-        <template #item.mileage="{ item }">
-          <div class="d-flex align-center gap-4">
+                  <!-- 👉 Mileage -->
+          <template #item.mileage="{ item }">
+            <div class="d-flex align-center gap-4">
 
-            <span>{{ item.mileage }} km</span>
-          </div>
-        </template>
-
-
-        <!-- 👉 Type -->
-        <template #item.type="{ item }">
-          <div class="d-flex align-center gap-4">
-
-            <span class="badge bg-success text-dark border border-dark rounded-1 px-2 py-1" style="border-radius: 6px;">{{ item.vehicleType.name }}</span>
-          </div>
-        </template>
-
-        <!-- 👉 Group -->
-        <template #item.group="{ item }">
-          <div class="d-flex align-center gap-4">
-
-            <span class="badge bg-warning text-dark border border-dark rounded-1 px-2 py-1" style="border-radius: 6px;">{{ item.vhicleGroup.name }}</span>
-          </div>
-        </template>
+              <span>{{ item.mileage }} km</span>
+            </div>
+          </template>
 
 
-        <!-- 👉 Model -->
-        <template #item.model="{ item }">
-          <div class="d-flex align-center gap-4">
-            <span class="badge bg-info text-dark border border-dark rounded-1 px-2 py-1" style="border-radius: 6px;">{{ item.model.name }}</span>
-          </div>
-        </template>
+          <!-- 👉 Type -->
+          <template #item.type="{ item }">
+            <VChip
+                color="success"
+                variant="elevated"
+                :label="true"
+              >
+                {{ item.vehicleType.name }}
+              </VChip>
+            </template>
+
+          
+
+          <!-- 👉 Group -->
+          <template #item.group="{ item }">
+            <VChip
+                color="warning"
+                variant="elevated"
+                :label="true"
+              >
+                {{ item.vhicleGroup.name }}
+              </VChip>
+          </template>
+
+
+          <!-- 👉 Model -->
+          <template #item.model="{ item }">
+            <VChip
+                color="info"
+                variant="elevated"
+                :label="true"
+              >
+                {{ item.model.name }}
+              </VChip>
+          </template>
+
+          
 
 
 
 
-        <!-- 👉 Actions -->
-        <template #item.actions="{ item }">
+          <!-- 👉 Actions -->
+          <template #item.actions="{ item }">
 
 
-                    <!-- edit user role -->
-        <IconBtn @click="openVehicleDrawer(item.id)">
-          <VIcon icon="tabler-edit" />
-        </IconBtn>
-
-          <!-- delete user  -->
-          <IconBtn @click="deleteVehicle(item.id)">
-            <VIcon icon="tabler-trash" />
+                      <!-- edit user role -->
+          <IconBtn @click="openVehicleDrawer(item.id)">
+            <VIcon icon="tabler-edit" />
           </IconBtn>
 
-        </template>
+            <!-- delete user  -->
+            <IconBtn @click="deleteVehicle(item.id)">
+              <VIcon icon="tabler-trash" />
+            </IconBtn>
 
-        <!-- pagination -->
-        <template #bottom>
-          <VDivider />
-          <div class="d-flex align-center justify-sm-space-between justify-center flex-wrap gap-3 pa-5 pt-3">
-            <p class="text-sm text-disabled mb-0">
-              {{ paginationMeta({ page, itemsPerPage }, totalVehicles) }}
-            </p>
+          </template>
 
-            <VPagination
-              v-model="page"
-              :length="Math.ceil(totalVehicles / itemsPerPage)"
-              :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalVehicles / itemsPerPage)"
-            >
-              <template #prev="slotProps">
-                <VBtn
-                  variant="tonal"
-                  color="default"
-                  v-bind="slotProps"
-                  :icon="false"
-                >
-                  Previous
-                </VBtn>
-              </template>
+          <!-- pagination -->
+          <template #bottom>
+            <VDivider />
+            <div class="d-flex align-center justify-sm-space-between justify-center flex-wrap gap-3 pa-5 pt-3">
+              <p class="text-sm text-disabled mb-0">
+                {{ paginationMeta({ page, itemsPerPage }, totalVehicles) }}
+              </p>
 
-              <template #next="slotProps">
-                <VBtn
-                  variant="tonal"
-                  color="default"
-                  v-bind="slotProps"
-                  :icon="false"
-                >
-                  Next
-                </VBtn>
-              </template>
-            </VPagination>
+              <VPagination
+                v-model="page"
+                :length="Math.ceil(totalVehicles / itemsPerPage)"
+                :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalVehicles / itemsPerPage)"
+              >
+                <template #prev="slotProps">
+                  <VBtn
+                    variant="tonal"
+                    color="default"
+                    v-bind="slotProps"
+                    :icon="false"
+                  >
+                    Previous
+                  </VBtn>
+                </template>
+
+                <template #next="slotProps">
+                  <VBtn
+                    variant="tonal"
+                    color="default"
+                    v-bind="slotProps"
+                    :icon="false"
+                  >
+                    Next
+                  </VBtn>
+                </template>
+              </VPagination>
+            </div>
+          </template>
+        </VDataTableServer>
+        <!-- SECTION -->
+        </VCard>
+      </VWindowItem>
+
+      <VWindowItem value="types">
+        <VCard>
+          <VCardText class="d-flex flex-wrap py-4 gap-4">
+          <div class="me-3 d-flex gap-3">
+            <AppSelect
+              :model-value="itemsPerPage"
+              :items="[
+                { value: 10, title: '10' },
+                { value: 25, title: '25' },
+                { value: 50, title: '50' },
+                { value: 100, title: '100' },
+                { value: -1, title: 'All' },
+              ]"
+              style="inline-size: 6.25rem;"
+              @update:model-value="itemsPerPage = parseInt($event, 10)"
+            />
           </div>
-        </template>
-      </VDataTableServer>
-      <!-- SECTION -->
-    </VCard>
+          <VSpacer />
+
+          <div class="app-user-search-filter d-flex align-center flex-wrap gap-4">
+            <!-- 👉 Search  -->
+            <div style="inline-size: 10rem;">
+              <AppTextField
+                v-model="searchQuery"
+                placeholder="Search"
+                density="compact"
+              />
+            </div>
+          </div>
+
+          <!-- 👉 Add Type button -->
+          <VBtn
+            prepend-icon="tabler-category-plus"
+            @click="openAddVehicleDrawer"
+          >
+          Add Type
+        </VBtn>
+
+        </VCardText>
+
+        <VDivider />
+
+        <!-- SECTION datatable -->
+        <VDataTableServer
+          v-model:items-per-page="itemsPerPage"
+          v-model:page="page"
+          :items="types"
+          :items-length="totalVehicles"
+          :headers="typeHeaders"
+          class="text-no-wrap"
+          @update:options="updateOptions"
+        >
+          <!-- 👉 Type -->
+          <template #item.name="{ item }">
+            <div class="d-flex align-center">
+              <div class="d-flex flex-column">
+                <h6 class="text-base">
+                  <span
+                    class="cursor-pointer over:opacity-80 transition duration-200 font-weight-medium text-link"
+                  >
+                    {{ item.name }}
+                  </span>
+                </h6>
+              </div>
+            </div>
+          </template>
+
+
+          <!-- 👉 Description -->
+          <template #item.description="{ item }">
+            <div class="d-flex align-center gap-4">
+
+              <span>{{ item.description }}</span>
+            </div>
+          </template>
+
+          <!-- 👉 Actions -->
+          <template #item.actions="{ item }">
+
+
+           <!-- edit user role -->
+          <IconBtn @click="openVehicleDrawer(item.id)">
+            <VIcon icon="tabler-edit" />
+          </IconBtn>
+
+            <!-- delete user  -->
+            <IconBtn @click="deleteType(item.id)">
+              <VIcon icon="tabler-trash" />
+            </IconBtn>
+
+          </template>
+
+          <!-- pagination -->
+          <template #bottom>
+            <VDivider />
+            <div class="d-flex align-center justify-sm-space-between justify-center flex-wrap gap-3 pa-5 pt-3">
+              <p class="text-sm text-disabled mb-0">
+                {{ paginationMeta({ page, itemsPerPage }, totalVehicles) }}
+              </p>
+
+              <VPagination
+                v-model="page"
+                :length="Math.ceil(totalVehicles / itemsPerPage)"
+                :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalVehicles / itemsPerPage)"
+              >
+                <template #prev="slotProps">
+                  <VBtn
+                    variant="tonal"
+                    color="default"
+                    v-bind="slotProps"
+                    :icon="false"
+                  >
+                    Previous
+                  </VBtn>
+                </template>
+
+                <template #next="slotProps">
+                  <VBtn
+                    variant="tonal"
+                    color="default"
+                    v-bind="slotProps"
+                    :icon="false"
+                  >
+                    Next
+                  </VBtn>
+                </template>
+              </VPagination>
+            </div>
+          </template>
+        </VDataTableServer>
+        <!-- SECTION -->
+        </VCard>
+      </VWindowItem>
+
+      <VWindowItem value="models">
+        <VCard>
+          <VCardText class="d-flex flex-wrap py-4 gap-4">
+          <div class="me-3 d-flex gap-3">
+            <AppSelect
+              :model-value="itemsPerPage"
+              :items="[
+                { value: 10, title: '10' },
+                { value: 25, title: '25' },
+                { value: 50, title: '50' },
+                { value: 100, title: '100' },
+                { value: -1, title: 'All' },
+              ]"
+              style="inline-size: 6.25rem;"
+              @update:model-value="itemsPerPage = parseInt($event, 10)"
+            />
+          </div>
+          <VSpacer />
+
+          <div class="app-user-search-filter d-flex align-center flex-wrap gap-4">
+            <!-- 👉 Search  -->
+            <div style="inline-size: 10rem;">
+              <AppTextField
+                v-model="searchQuery"
+                placeholder="Search"
+                density="compact"
+              />
+            </div>
+          </div>
+
+          <!-- 👉 Add Vehicle button -->
+          <VBtn
+            prepend-icon="tabler-category-plus"
+            @click="openAddVehicleDrawer"
+          >
+          Add Vehicle
+        </VBtn>
+
+        </VCardText>
+
+
+        
+
+        <VDivider />
+
+        <!-- SECTION datatable -->
+        <VDataTableServer
+          v-model:items-per-page="itemsPerPage"
+          v-model:page="page"
+          :items="vehicles"
+          :items-length="totalVehicles"
+          :headers="headers"
+          class="text-no-wrap"
+          @update:options="updateOptions"
+        >
+          <!-- 👉 Vehicle -->
+          <template #item.plate="{ item }">
+            <div class="d-flex align-center">
+              <VAvatar
+                size="34"
+                :variant="!item.avatar ? 'tonal' : undefined"
+                :color="!item.avatar ? 'primary' : undefined"
+
+                class=" cursor-pointer over:opacity-80 transition duration-200 me-3"
+              >
+                <VImg
+                  v-if="item.avatar"
+                  :src="item.avatar"
+                />
+                <span v-else>{{ avatarText(item.licensePlate) }}</span>
+              </VAvatar>
+              <div class="d-flex flex-column">
+                <h6 class="text-base">
+                  <span
+                    class="cursor-pointer over:opacity-80 transition duration-200 font-weight-medium text-link"
+                  >
+                    {{ item.licensePlate }}
+                  </span>
+                </h6>
+                <span class="text-sm text-medium-emphasis">{{ item.vin }}</span>
+              </div>
+            </div>
+          </template>
+
+
+                  <!-- 👉 Mileage -->
+          <template #item.mileage="{ item }">
+            <div class="d-flex align-center gap-4">
+
+              <span>{{ item.mileage }} km</span>
+            </div>
+          </template>
+
+
+          <!-- 👉 Type -->
+          <template #item.type="{ item }">
+            <VChip
+                color="success"
+                variant="elevated"
+                :label="true"
+              >
+                {{ item.vehicleType.name }}
+              </VChip>
+            </template>
+
+          
+
+          <!-- 👉 Group -->
+          <template #item.group="{ item }">
+            <VChip
+                color="warning"
+                variant="elevated"
+                :label="true"
+              >
+                {{ item.vhicleGroup.name }}
+              </VChip>
+          </template>
+
+
+          <!-- 👉 Model -->
+          <template #item.model="{ item }">
+            <VChip
+                color="info"
+                variant="elevated"
+                :label="true"
+              >
+                {{ item.model.name }}
+              </VChip>
+          </template>
+
+          
+
+
+
+
+          <!-- 👉 Actions -->
+          <template #item.actions="{ item }">
+
+
+                      <!-- edit user role -->
+          <IconBtn @click="openVehicleDrawer(item.id)">
+            <VIcon icon="tabler-edit" />
+          </IconBtn>
+
+            <!-- delete user  -->
+            <IconBtn @click="deleteVehicle(item.id)">
+              <VIcon icon="tabler-trash" />
+            </IconBtn>
+
+          </template>
+
+          <!-- pagination -->
+          <template #bottom>
+            <VDivider />
+            <div class="d-flex align-center justify-sm-space-between justify-center flex-wrap gap-3 pa-5 pt-3">
+              <p class="text-sm text-disabled mb-0">
+                {{ paginationMeta({ page, itemsPerPage }, totalVehicles) }}
+              </p>
+
+              <VPagination
+                v-model="page"
+                :length="Math.ceil(totalVehicles / itemsPerPage)"
+                :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalVehicles / itemsPerPage)"
+              >
+                <template #prev="slotProps">
+                  <VBtn
+                    variant="tonal"
+                    color="default"
+                    v-bind="slotProps"
+                    :icon="false"
+                  >
+                    Previous
+                  </VBtn>
+                </template>
+
+                <template #next="slotProps">
+                  <VBtn
+                    variant="tonal"
+                    color="default"
+                    v-bind="slotProps"
+                    :icon="false"
+                  >
+                    Next
+                  </VBtn>
+                </template>
+              </VPagination>
+            </div>
+          </template>
+        </VDataTableServer>
+        <!-- SECTION -->
+        </VCard>
+      </VWindowItem>
+
+
+      <VWindowItem value="groups">
+        <VCard>
+          <VCardText class="d-flex flex-wrap py-4 gap-4">
+          <div class="me-3 d-flex gap-3">
+            <AppSelect
+              :model-value="itemsPerPage"
+              :items="[
+                { value: 10, title: '10' },
+                { value: 25, title: '25' },
+                { value: 50, title: '50' },
+                { value: 100, title: '100' },
+                { value: -1, title: 'All' },
+              ]"
+              style="inline-size: 6.25rem;"
+              @update:model-value="itemsPerPage = parseInt($event, 10)"
+            />
+          </div>
+          <VSpacer />
+
+          <div class="app-user-search-filter d-flex align-center flex-wrap gap-4">
+            <!-- 👉 Search  -->
+            <div style="inline-size: 10rem;">
+              <AppTextField
+                v-model="searchQuery"
+                placeholder="Search"
+                density="compact"
+              />
+            </div>
+          </div>
+
+          <!-- 👉 Add Vehicle button -->
+          <VBtn
+            prepend-icon="tabler-category-plus"
+            @click="openAddVehicleDrawer"
+          >
+          Add Vehicle
+        </VBtn>
+
+        </VCardText>
+
+
+        
+
+        <VDivider />
+
+        <!-- SECTION datatable -->
+        <VDataTableServer
+          v-model:items-per-page="itemsPerPage"
+          v-model:page="page"
+          :items="groups"
+          :items-length="totalVehicles"
+          :headers="groupHeaders"
+          class="text-no-wrap"
+          @update:options="updateOptions"
+        >
+          <!-- 👉 Vehicle -->
+          <template #item.name="{ item }">
+            <div class="d-flex align-center">
+              <VAvatar
+                size="34"
+                :variant="!item.avatar ? 'tonal' : undefined"
+                :color="!item.avatar ? 'primary' : undefined"
+
+                class=" cursor-pointer over:opacity-80 transition duration-200 me-3"
+              >
+                <VImg
+                  v-if="item.avatar"
+                  :src="item.avatar"
+                />
+                <span v-else>{{ avatarText(item.name) }}</span>
+              </VAvatar>
+              <div class="d-flex flex-column">
+                <h6 class="text-base">
+                  <span
+                    class="cursor-pointer over:opacity-80 transition duration-200 font-weight-medium text-link"
+                  >
+                    {{ item.name }}
+                  </span>
+                </h6>
+              </div>
+            </div>
+          </template>
+
+
+                  <!-- 👉 Mileage -->
+          <template #item.mileage="{ item }">
+            <div class="d-flex align-center gap-4">
+
+              <span>{{ item.mileage }} km</span>
+            </div>
+          </template>
+
+
+          
+          <!-- 👉 Actions -->
+          <template #item.actions="{ item }">
+
+          <!-- edit user role -->
+          <IconBtn @click="openVehicleDrawer(item.id)">
+            <VIcon icon="tabler-edit" />
+          </IconBtn>
+
+            <!-- delete user  -->
+            <IconBtn @click="deleteGroup(item.id)">
+              <VIcon icon="tabler-trash" />
+            </IconBtn>
+
+          </template>
+
+          <!-- pagination -->
+          <template #bottom>
+            <VDivider />
+            <div class="d-flex align-center justify-sm-space-between justify-center flex-wrap gap-3 pa-5 pt-3">
+              <p class="text-sm text-disabled mb-0">
+                {{ paginationMeta({ page, itemsPerPage }, totalVehicles) }}
+              </p>
+
+              <VPagination
+                v-model="page"
+                :length="Math.ceil(totalVehicles / itemsPerPage)"
+                :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalVehicles / itemsPerPage)"
+              >
+                <template #prev="slotProps">
+                  <VBtn
+                    variant="tonal"
+                    color="default"
+                    v-bind="slotProps"
+                    :icon="false"
+                  >
+                    Previous
+                  </VBtn>
+                </template>
+
+                <template #next="slotProps">
+                  <VBtn
+                    variant="tonal"
+                    color="default"
+                    v-bind="slotProps"
+                    :icon="false"
+                  >
+                    Next
+                  </VBtn>
+                </template>
+              </VPagination>
+            </div>
+          </template>
+        </VDataTableServer>
+        <!-- SECTION -->
+          
+        </VCard>
+      </VWindowItem>
+
+    </VWindow>
+
+  
+
+
 </template>
+
+
+<style scoped>
+.custom-tabs {
+  border: 2px solid #ccc;
+  border-radius: 8px;
+  padding: 8px;
+}
+</style>
