@@ -23,8 +23,13 @@ const typeHeaders = [
   { title: 'Description', key: 'description' },
   { title: 'Actions', key: 'actions', sortable: false },
 ]
-const modelHeaders = [
 
+const modelHeaders = [
+  { title: 'Name', key: 'name' },
+  { title: 'Engine Type', key: 'engineType' },
+  { title: 'Fuel Type', key: 'fuelType' },
+  { title: 'Make', key: 'make' },
+  { title: 'Actions', key: 'actions', sortable: false },
 ]
 const groupHeaders = [
   { title: 'Name', key: 'name' },
@@ -48,17 +53,38 @@ const vehicle = ref({})
 
 const totalVehicles = ref(0) 
 const isVehicleDialogDrawer = ref(false)
-
 const isAddVehicleDrawer = ref(false)
+
+const isAddTypeModal = ref(false)
+const isAddModelModal = ref(false)
+const isAddGroupModal = ref(false)
 
 
 const models = ref([]);
 const groups = ref([]);
 const types = ref([]);
 
+const Model = ref();
+const Type = ref();
+const Group = ref();
+
+
 const vehicleModels = ref([]);
 const vehicleGroups = ref([]);
 const vehicleTypes = ref([]);
+
+
+//Add Type refs
+const typeName = ref('')
+const typeDescription = ref('')
+
+//Add Model refs
+const modelName = ref('')
+const modelDescription = ref('')
+
+//Add Group refs
+const groupName = ref('')
+const groupDescription = ref('')
 
 
 
@@ -87,6 +113,7 @@ onMounted(() => {
   getModels();
   getGroups();
 })
+
 
 
 const onSubmit = async () => {
@@ -232,9 +259,6 @@ const addVehicleGroup = async () => {
     }
     });
 }
-
-
-
 
 const getModels = async () => {
   try {
@@ -449,7 +473,6 @@ const deleteGroup = async (id: number) => {
   }
 }
 
-
 const getVehicle = async (id: number) => {
   try {
     const response = await api.get(`https://app.trackswiftly.com/vehicles/${id}`, {
@@ -473,6 +496,63 @@ const getVehicle = async (id: number) => {
 
 }
 
+const getModel = async(id: number) => {
+  try {
+    const response = await api.get(`https://app.trackswiftly.com/models/${id}`, {
+      headers: {
+        'Accept': '*/*',
+      }
+    });
+
+    Model.value = response.data[0]
+    return Model.value;    
+
+
+
+  } catch (error) {
+    console.error("Error fetching vehicle:", error.response?.data || error.message);
+
+
+  }
+}
+const getType = async(id: number) => {
+  try {
+    const response = await api.get(`https://app.trackswiftly.com/types/${id}`, {
+      headers: {
+        'Accept': '*/*',
+      }
+    });
+
+    Type.value = response.data[0]
+
+    return Type.value;    
+
+  } catch (error) {
+    console.error("Error fetching vehicle:", error.response?.data || error.message);
+
+
+  }
+}
+const getGroup = async(id: number) => {
+  try {
+    const response = await api.get(`https://app.trackswiftly.com/groups/${id}`, {
+      headers: {
+        'Accept': '*/*',
+      }
+    });
+
+    Group.value = response.data[0]
+
+    return Group.value;    
+
+
+
+  } catch (error) {
+    console.error("Error fetching vehicle:", error.response?.data || error.message);
+
+
+  }
+}
 
 const getVehicles = async () => {
   try {
@@ -588,6 +668,23 @@ const openAddVehicleDrawer = async () => {
   isAddVehicleDrawer.value = true 
 
 }
+
+
+const openTypeModal = async (id: number) => {
+  console.log('Fetching vehicle:', id)
+  
+  
+}
+ 
+const openModelModal = async (id: number) => {
+  console.log('Fetching vehicle:', id)
+
+}
+ 
+const openGroupModal = async (id: number) => {
+  console.log('Fetching vehicle:', id)
+
+}
  
 
 
@@ -595,6 +692,110 @@ const openAddVehicleDrawer = async () => {
 
 
 <template>
+
+      <!-- 👉 Add new type-->
+
+      <VDialog v-model="isAddTypeModal"
+      max-width="600"
+      >
+
+      <DialogCloseBtn @click="isAddTypeModal = !isAddTypeModal" />
+
+          <!-- Dialog Content -->
+          <VCard title="Add Type">
+            <VCardText>
+              <VRow>
+
+                <VCol cols="12">
+                  <AppTextField
+                    v-model="typeName"
+                    label="Name"
+                    placeholder="Name"
+                  />
+                </VCol>
+                <VCol cols="12">
+                  <AppTextarea
+                   v-model="typeDescription"
+                    label="Description"
+                    auto-grow
+                    clearable
+                    clear-icon="tabler-circle-x"
+                    counter
+
+                    />
+                </VCol>
+              </VRow>
+            </VCardText>
+
+            <VCardText class="d-flex justify-end flex-wrap gap-3">
+              <VBtn
+                variant="tonal"
+                color="secondary"
+                @click="isAddTypeModal = false"
+              >
+                Close
+              </VBtn>
+              <VBtn @click="">
+                Submit
+              </VBtn>
+            </VCardText>
+          </VCard>
+        
+      </VDialog>
+
+      <!-- 👉 Add new model-->
+
+      <!-- 👉 Add new group-->
+
+      <VDialog v-model="isAddGroupModal"
+      max-width="600"
+      >
+
+      <DialogCloseBtn @click="isAddGroupModal = !isAddGroupModal" />
+
+          <!-- Dialog Content -->
+          <VCard title="Add Group">
+            <VCardText>
+              <VRow>
+
+                <VCol cols="12">
+                  <AppTextField
+                    v-model="groupName"
+                    label="Name"
+                    placeholder="Name"
+                  />
+                </VCol>
+                <VCol cols="12">
+                  <AppTextarea
+                   v-model="groupDescription"
+                    label="Description"
+                    auto-grow
+                    clearable
+                    clear-icon="tabler-circle-x"
+                    counter
+
+                    />
+                </VCol>
+              </VRow>
+            </VCardText>
+
+            <VCardText class="d-flex justify-end flex-wrap gap-3">
+              <VBtn
+                variant="tonal"
+                color="secondary"
+                @click="isAddGroupModal = false"
+              >
+                Close
+              </VBtn>
+              <VBtn @click="">
+                Submit
+              </VBtn>
+            </VCardText>
+          </VCard>
+        
+      </VDialog>
+
+
 
 
     <!-- 👉 Add new vehicle-->
@@ -1101,7 +1302,7 @@ const openAddVehicleDrawer = async () => {
           <!-- 👉 Add Type button -->
           <VBtn
             prepend-icon="tabler-category-plus"
-            @click="openAddVehicleDrawer"
+            @click="isAddTypeModal = true"
           >
           Add Type
         </VBtn>
@@ -1123,6 +1324,19 @@ const openAddVehicleDrawer = async () => {
           <!-- 👉 Type -->
           <template #item.name="{ item }">
             <div class="d-flex align-center">
+              <VAvatar
+                size="34"
+                :variant="!item.avatar ? 'tonal' : undefined"
+                :color="!item.avatar ? 'primary' : undefined"
+
+                class=" cursor-pointer over:opacity-80 transition duration-200 me-3"
+              >
+                <VImg
+                  v-if="item.avatar"
+                  :src="item.avatar"
+                />
+                <span v-else>{{ avatarText(item.name) }}</span>
+              </VAvatar>
               <div class="d-flex flex-column">
                 <h6 class="text-base">
                   <span
@@ -1237,28 +1451,24 @@ const openAddVehicleDrawer = async () => {
             prepend-icon="tabler-category-plus"
             @click="openAddVehicleDrawer"
           >
-          Add Vehicle
+          Add Model
         </VBtn>
 
         </VCardText>
-
-
-        
-
         <VDivider />
 
         <!-- SECTION datatable -->
         <VDataTableServer
           v-model:items-per-page="itemsPerPage"
           v-model:page="page"
-          :items="vehicles"
+          :items="models"
           :items-length="totalVehicles"
-          :headers="headers"
+          :headers="modelHeaders"
           class="text-no-wrap"
           @update:options="updateOptions"
         >
           <!-- 👉 Vehicle -->
-          <template #item.plate="{ item }">
+          <template #item.name="{ item }">
             <div class="d-flex align-center">
               <VAvatar
                 size="34"
@@ -1271,14 +1481,14 @@ const openAddVehicleDrawer = async () => {
                   v-if="item.avatar"
                   :src="item.avatar"
                 />
-                <span v-else>{{ avatarText(item.licensePlate) }}</span>
+                <span v-else>{{ avatarText(item.name) }}</span>
               </VAvatar>
               <div class="d-flex flex-column">
                 <h6 class="text-base">
                   <span
                     class="cursor-pointer over:opacity-80 transition duration-200 font-weight-medium text-link"
                   >
-                    {{ item.licensePlate }}
+                    {{ item.name }}
                   </span>
                 </h6>
                 <span class="text-sm text-medium-emphasis">{{ item.vin }}</span>
@@ -1287,67 +1497,53 @@ const openAddVehicleDrawer = async () => {
           </template>
 
 
-                  <!-- 👉 Mileage -->
-          <template #item.mileage="{ item }">
-            <div class="d-flex align-center gap-4">
-
-              <span>{{ item.mileage }} km</span>
-            </div>
-          </template>
+          <!-- 👉 Mileage -->
+          <template #item.engineType="{ item }">
+            <VChip
+                color="info"
+                variant="elevated"
+                :label="true"
+              >
+                {{ item.engineType }}
+              </VChip>
+            </template>
 
 
           <!-- 👉 Type -->
-          <template #item.type="{ item }">
+          <template #item.fuelType="{ item }">
             <VChip
                 color="success"
                 variant="elevated"
                 :label="true"
               >
-                {{ item.vehicleType.name }}
+                {{ item.fuelType }}
               </VChip>
             </template>
 
           
 
           <!-- 👉 Group -->
-          <template #item.group="{ item }">
+          <template #item.make="{ item }">
             <VChip
                 color="warning"
                 variant="elevated"
                 :label="true"
               >
-                {{ item.vhicleGroup.name }}
+                {{ item.make }}
               </VChip>
           </template>
-
-
-          <!-- 👉 Model -->
-          <template #item.model="{ item }">
-            <VChip
-                color="info"
-                variant="elevated"
-                :label="true"
-              >
-                {{ item.model.name }}
-              </VChip>
-          </template>
-
-          
-
-
-
 
           <!-- 👉 Actions -->
           <template #item.actions="{ item }">
 
 
-                      <!-- edit user role -->
+          <!-- edit user role -->
           <IconBtn @click="openVehicleDrawer(item.id)">
             <VIcon icon="tabler-edit" />
           </IconBtn>
 
             <!-- delete user  -->
-            <IconBtn @click="deleteVehicle(item.id)">
+            <IconBtn @click="deleteModel(item.id)">
               <VIcon icon="tabler-trash" />
             </IconBtn>
 
@@ -1429,15 +1625,12 @@ const openAddVehicleDrawer = async () => {
           <!-- 👉 Add Vehicle button -->
           <VBtn
             prepend-icon="tabler-category-plus"
-            @click="openAddVehicleDrawer"
+            @click="isAddGroupModal = true"
           >
-          Add Vehicle
+          Add Group
         </VBtn>
 
         </VCardText>
-
-
-        
 
         <VDivider />
 
