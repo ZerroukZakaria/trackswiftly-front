@@ -42,6 +42,8 @@ export const betweenValidator = (value: unknown, min: number, max: number) => {
   return (Number(min) <= valueAsNumber && Number(max) >= valueAsNumber) || `Enter number between ${min} and ${max}`
 }
 
+
+
 // 👉 Integer Validator
 export const integerValidator = (value: unknown) => {
   if (isEmpty(value))
@@ -75,6 +77,15 @@ export const alphaValidator = (value: unknown) => {
 
   return /^[A-Z]*$/i.test(String(value)) || 'The Alpha field may only contain alphabetic characters'
 }
+
+// 👉 Alpha-Space Validator
+
+export const alphaWithSpacesValidator = (value: unknown) => {
+  if (isEmpty(value)) 
+    return true;  // ✅ Allow empty values
+
+  return /^[A-Z\s]*$/i.test(String(value)) || 'Only alphabetic characters and spaces are allowed';
+};
 
 // 👉 URL Validator
 export const urlValidator = (value: unknown) => {

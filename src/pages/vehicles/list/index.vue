@@ -2,7 +2,7 @@
 import { paginationMeta } from '@api-utils/paginationMeta'
 import Swal from 'sweetalert2'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
-import type { VForm } from 'vuetify/components/VForm'
+import { VForm } from 'vuetify/components/VForm'
 import { VDataTableServer } from 'vuetify/labs/VDataTable'
 
 import api from '@/utils/axios'
@@ -38,6 +38,13 @@ const groupHeaders = [
 ]
 
 
+const locationHeaders = [
+  { title: 'Name', key: 'name' },
+  { title: 'Description', key: 'description' },
+  { title: 'Actions', key: 'actions', sortable: false },
+]
+
+
 
 
 const currentTab = ref('vehicles')
@@ -60,6 +67,8 @@ const isAddModelModal = ref(false)
 const isAddGroupModal = ref(false)
 
 
+
+
 const models = ref([]);
 const groups = ref([]);
 const types = ref([]);
@@ -72,17 +81,33 @@ const Group = ref();
 const vehicleModels = ref([]);
 const vehicleGroups = ref([]);
 const vehicleTypes = ref([]);
+const totalModels = ref(0);
+const totalGroups = ref(0);
+const totalTypes = ref(0);
 
 
 //Add Type refs
+const isAddTypeFormValid = ref(false)
+const refTypeForm = ref<VForm>();
 const typeName = ref('')
 const typeDescription = ref('')
 
 //Add Model refs
+
+const isAddModelFormValid = ref(false)
+const refModelForm = ref('')
 const modelName = ref('')
-const modelDescription = ref('')
+const modelMake = ref('')
+const modelYear = ref('')
+const modelEngineType = ref('')
+const modelFuelType = ref('')
+const modelTransmission = ref('')
+const modelMaxPayloadWeight = ref('')
+const modelMaxVolume = ref('')
 
 //Add Group refs
+const isAddGroupFormValid = ref(false)
+const refGroupForm = ref<VForm>()
 const groupName = ref('')
 const groupDescription = ref('')
 
@@ -127,6 +152,45 @@ const onSubmit = async () => {
   }
 };
 
+
+const submitAddVehicleGroup = async() => {
+  const { valid } = await refGroupForm.value?.validate();
+
+  if (valid) {
+    await addVehicleGroup();
+    getGroups();
+
+  } else {
+    console.log("Form is not valid");
+  }
+
+}
+
+const submitAddVehicleType = async() => {
+  const { valid } = await refTypeForm.value?.validate();
+
+  if (valid) {
+    await addVehicleType();
+    getTypes();
+
+  } else {
+    console.log("Form is not valid");
+  }
+}
+
+
+const submitAddVehicleModel = async() => {
+  const { valid } = await refModelForm.value?.validate();
+
+  if (valid) {
+    await addVehicleModel();
+    getModels();
+
+  } else {
+    console.log("Form is not valid");
+  }
+}
+
 const saveVehicle = async () => {
   try {
 
@@ -164,10 +228,7 @@ const saveVehicle = async () => {
       }
      });
 
-
      isAddVehicleDrawer.value = false;
-
-
 
     console.log('Vehicle saved successfully:', response.data);
   } catch (error) {
@@ -178,12 +239,13 @@ const saveVehicle = async () => {
 
 const addVehicleType = async () => {
 
-
-  const typeData = {
-    name: '',
-    description: ''
-  };
+  try {
   
+    let typeData = {
+      name: typeName.value,
+      ...(typeDescription.value ? { description: typeDescription.value } : {})
+    };
+
 
   const response = await api.post('https://app.trackswiftly.com/types', [typeData], {
       headers: {
@@ -202,18 +264,42 @@ const addVehicleType = async () => {
     }
     });
 
+
+    
+    
+    isAddTypeModal.value = false;
+    typeName.value = '';
+    typeDescription.value = '';
+
+  } catch (error) {
+    console.error('Error saving type:', error.response?.data || error.message);
+
+  }
+
+
 }
 
 const addVehicleModel = async () => {
-  const modelData = {
-    name: '',
-    make: "",
-    year: "",
-    engineType: "",
-    fuelType: "",
-    transmission: "",
-    maxPayloadWeight: 0,
-    maxVolume: 0  };
+
+  try {
+
+    let formattedYear = null;
+    if (purchaseDate.value) {
+      formattedYear = new Date(modelYear.value).toISOString();
+    }
+
+
+    let modelData = {
+      name: modelName.value,
+      make: modelMake.value,
+      engineType: modelEngineType.value,
+      fuelType: modelFuelType.value,
+      ...(formattedYear && { year: formattedYear }),
+      ...(modelTransmission.value && { transmission: modelTransmission.value }),
+      ...(modelMaxPayloadWeight.value && { maxPayloadWeight: modelMaxPayloadWeight.value }),
+      ...(modelMaxVolume.value && { maxVolume: modelMaxVolume.value }),
+    };
+
   
 
   const response = await api.post('https://app.trackswiftly.com/models', [modelData], {
@@ -232,16 +318,35 @@ const addVehicleModel = async () => {
       document.querySelector('.swal2-confirm').style.color = 'white';
     }
     });
+
+    isAddModelModal.value = false;
+
+    modelName.value  = ''
+    modelMake.value  = ''
+    modelEngineType.value = ''
+    modelFuelType.value  = ''
+    modelYear.value  = ''
+    modelTransmission.value  = ''
+    modelMaxPayloadWeight.value  = ''
+    modelMaxVolume.value  = ''
+
+  } catch (error) {
+    console.error('Error saving model:', error.response?.data || error.message);
+
+  }
+
+
 }
 
 const addVehicleGroup = async () => {
-  
-  const groupData = {
-    name: '',
-    description: ''
-  };
-  
 
+  try {
+    let groupData = {
+    name: groupName.value,
+    ...(groupDescription.value ? { description: groupDescription.value } : {})
+
+   };
+  
   const response = await api.post('https://app.trackswiftly.com/groups', [groupData], {
       headers: {
         'Accept': '*/*',
@@ -258,6 +363,18 @@ const addVehicleGroup = async () => {
       document.querySelector('.swal2-confirm').style.color = 'white';
     }
     });
+
+    
+    isAddGroupModal.value = false
+    groupName.value = '';
+    groupDescription.value = '';
+
+  } catch (error) {
+    console.error('Error saving group:', error.response?.data || error.message);
+
+  }
+  
+
 }
 
 const getModels = async () => {
@@ -269,6 +386,7 @@ const getModels = async () => {
     });
 
     models.value = response.data.content
+    totalModels.value = response.data.content.length
 
     return response.data.content
   } catch (error) {
@@ -290,7 +408,7 @@ const getTypes = async () => {
     });
 
     types.value = response.data.content
-
+    totalTypes.value = response.data.content.length
     return response.data.content
   } catch (error) {
     console.error("Error fetching types:", error.response?.data || error.message);
@@ -307,6 +425,7 @@ const getGroups= async () => {
 
 
     groups.value = response.data.content
+    totalGroups.value = response.data.content.length
 
     return response.data.content
   } catch (error) {
@@ -695,7 +814,7 @@ const openGroupModal = async (id: number) => {
 
       <!-- 👉 Add new type-->
 
-      <VDialog v-model="isAddTypeModal"
+      <VDialog persistent v-model="isAddTypeModal"
       max-width="600"
       >
 
@@ -704,27 +823,29 @@ const openGroupModal = async (id: number) => {
           <!-- Dialog Content -->
           <VCard title="Add Type">
             <VCardText>
-              <VRow>
-
-                <VCol cols="12">
-                  <AppTextField
-                    v-model="typeName"
-                    label="Name"
-                    placeholder="Name"
-                  />
-                </VCol>
-                <VCol cols="12">
-                  <AppTextarea
-                   v-model="typeDescription"
-                    label="Description"
-                    auto-grow
-                    clearable
-                    clear-icon="tabler-circle-x"
-                    counter
-
+              <VForm ref="refTypeForm" v-model="isAddTypeFormValid">
+                <VRow>
+                  <VCol cols="12">
+                    <AppTextField
+                      v-model="typeName"
+                      label="Name"
+                      placeholder="Name"
+                      :rules = "[requiredValidator, alphaValidator]"
                     />
-                </VCol>
-              </VRow>
+                  </VCol>
+                  <VCol cols="12">
+                    <AppTextarea
+                     v-model="typeDescription"
+                      label="Description"
+                      auto-grow
+                      clearable
+                      clear-icon="tabler-circle-x"
+                      counter
+                      :rules = "[alphaWithSpacesValidator]"
+                      />
+                  </VCol>
+                </VRow>
+              </VForm>
             </VCardText>
 
             <VCardText class="d-flex justify-end flex-wrap gap-3">
@@ -735,7 +856,7 @@ const openGroupModal = async (id: number) => {
               >
                 Close
               </VBtn>
-              <VBtn @click="">
+              <VBtn @click="submitAddVehicleType">
                 Submit
               </VBtn>
             </VCardText>
@@ -745,9 +866,136 @@ const openGroupModal = async (id: number) => {
 
       <!-- 👉 Add new model-->
 
+      <VDialog persistent  v-model="isAddModelModal"
+      max-width="600"
+      >
+
+      <DialogCloseBtn @click="isAddModelModal = !isAddModelModal" />
+
+          <!-- Dialog Content -->
+          <VCard title="Add Model">
+            <VCardText>
+              <VForm ref="refModelForm" v-model="isAddModelFormValid">
+                <VRow>
+                  <VCol
+                    cols="12"
+                    sm="6"
+                  >
+                    <AppTextField
+                      v-model="modelName"
+                      label="Name"
+                      placeholder="Blackwood"
+                      :rules = "[requiredValidator]"
+
+                    />
+                  </VCol>
+                  <VCol
+                    cols="12"
+                    sm="6"
+                  >
+                    <AppTextField
+                      v-model="modelMake"
+                      label="Make"
+                      placeholder="Lincoln"
+                      :rules = "[requiredValidator]"
+
+                    />
+                  </VCol>
+                  <VCol
+                    cols="12"
+                    sm="6"
+                    md="4"
+                  >
+                    <AppTextField
+                      v-model="modelEngineType"
+                      label="Engine Type"
+                      placeholder="HYBRID"
+                      :rules = "[requiredValidator]"
+
+                    />
+                  </VCol>
+                  <VCol
+                    cols="12"
+                    sm="6"
+                    md="4"
+                  >
+                    <AppTextField
+                      v-model="modelFuelType"
+                      label="Fuel Type"
+                      placeholder="PETROL"
+                      :rules = "[requiredValidator]"
+
+                    />
+                  </VCol>
+                  <VCol
+                    cols="12"
+                    sm="6"
+                    md="4"
+                  >
+                    <AppTextField
+                      v-model="modelTransmission"
+                      label="Transmission"
+                      placeholder="Doe"
+                    />
+                  </VCol>
+                  <VCol cols="12">
+                    <AppDateTimePicker
+                    v-model="modelYear"
+                    label="Year"
+                    placeholder="2025-02-21"
+                    :rules = "[dateValidator]"
+                  />
+                  </VCol>
+                  <VCol
+                    cols="12"
+                    sm="6"
+                  >
+                    <AppTextField
+                      v-model="modelMaxVolume"
+                      label="Max volume (m³)"
+                      type="number"
+                      placeholder="3.2"
+                      :rules = "[positiveNumberValidator, numberValidator]"
+
+                
+                    />
+                  </VCol>
+                  <VCol
+                    cols="12"
+                    sm="6"
+                  >
+                    <AppTextField
+                      v-model="modelMaxPayloadWeight"
+                      label="Max payload weight (Kg)"
+                      type="number"
+                      placeholder="712"
+                      :rules = "[positiveNumberValidator, numberValidator]"
+
+                    />
+                  </VCol>
+                </VRow>
+              </VForm>
+            </VCardText>
+
+            <VCardText class="d-flex justify-end flex-wrap gap-3">
+              <VBtn
+                variant="tonal"
+                color="secondary"
+                @click="isAddModelModal = false"
+              >
+                Close
+              </VBtn>
+              <VBtn @click="submitAddVehicleModel">
+                Submit
+              </VBtn>
+            </VCardText>
+          </VCard>
+        
+      </VDialog>
+
       <!-- 👉 Add new group-->
 
-      <VDialog v-model="isAddGroupModal"
+      <VDialog persistent v-model="isAddGroupModal"
       max-width="600"
       >
 
@@ -756,27 +1004,29 @@ const openGroupModal = async (id: number) => {
           <!-- Dialog Content -->
           <VCard title="Add Group">
             <VCardText>
-              <VRow>
-
-                <VCol cols="12">
-                  <AppTextField
-                    v-model="groupName"
-                    label="Name"
-                    placeholder="Name"
-                  />
-                </VCol>
-                <VCol cols="12">
-                  <AppTextarea
-                   v-model="groupDescription"
-                    label="Description"
-                    auto-grow
-                    clearable
-                    clear-icon="tabler-circle-x"
-                    counter
-
+              <VForm ref="refGroupForm" v-model="isAddGroupFormValid" >
+                <VRow>
+                  <VCol cols="12">
+                    <AppTextField
+                      v-model="groupName"
+                      label="Name"
+                      placeholder="Name"
+                      :rules = "[requiredValidator, alphaValidator]"
                     />
-                </VCol>
-              </VRow>
+                  </VCol>
+                  <VCol cols="12">
+                    <AppTextarea
+                     v-model="groupDescription"
+                      label="Description"
+                      auto-grow
+                      clearable
+                      clear-icon="tabler-circle-x"
+                      counter
+                      :rules = "[alphaWithSpacesValidator]"
+                      />
+                  </VCol>
+                </VRow>
+              </VForm>
             </VCardText>
 
             <VCardText class="d-flex justify-end flex-wrap gap-3">
@@ -787,7 +1037,7 @@ const openGroupModal = async (id: number) => {
               >
                 Close
               </VBtn>
-              <VBtn @click="">
+              <VBtn @click="submitAddVehicleGroup">
                 Submit
               </VBtn>
             </VCardText>
@@ -796,272 +1046,274 @@ const openGroupModal = async (id: number) => {
       </VDialog>
 
 
+      <!-- 👉 Add new vehicle-->
+      <VNavigationDrawer
+        v-model="isAddVehicleDrawer"
+        temporary
+        :width="400"
+        location="end"
+        class="scrollable-content"
+      >
+
+          <!-- 👉 Title -->
+      <AppDrawerHeaderSection
+        title="Add Vehicle"
+        @cancel="isAddVehicleDrawer = false"
+      />
+
+      <PerfectScrollbar :options="{ wheelPropagation: false }">
+        <VCard flat>
+          <VCardText>
+            <!-- 👉 Form -->
+            <VForm
+              ref="refForm"
+
+              v-model="isFormValid"
+              @submit.prevent="onSubmit"
+            >
+
+            <VRow>
+                <!-- 👉 VIN -->
+                <VCol cols="12">
+                  <AppTextField
+                    v-model="vin"
+                    :rules="[requiredValidator]"
+                    label="VIN"
+                    placeholder="SAJWJ1CD4F8597404"
+                  />
+                </VCol>
+
+                <!-- 👉 License Plate -->
+                <VCol cols="12">
+                  <AppTextField
+                    v-model="licensePlate"
+                    :rules="[requiredValidator]"
+                    label="License Plate"
+                    placeholder="81-063-5933"
+                  />
+                </VCol>
+
+                <!-- 👉 Mileage -->
+                <VCol cols="12">
+                  <AppTextField
+                    v-model="mileage"
+                    :rules="[requiredValidator, numberValidator, positiveNumberValidator]"
+                    label="Mileage (km)"
+                    placeholder="5000"
+                    type="number"  
+                    min="0"
+
+                  />
+                </VCol>
+
+                <!-- 👉 Purchase Date -->
+                <VCol cols="12">
+                  <AppDateTimePicker
+                    v-model="purchaseDate"
+                    label="Purchase Date"
+                    placeholder="2025-02-21"
+                    :rules = "[dateValidator]"
+                  />
+                </VCol>
+
+                <!-- 👉 Type -->
+                <VCol cols="12">
+                  <AppSelect
+                    v-model="type"
+                    label="Select Type"
+                    placeholder="Select Type"
+                    :rules="[requiredValidator]"
+                    :items="vehicleTypes"
+                  />
+                </VCol>
 
 
-    <!-- 👉 Add new vehicle-->
-    <VNavigationDrawer
-      v-model="isAddVehicleDrawer"
-      temporary
-      :width="400"
-      location="end"
-      class="scrollable-content"
-    >
+                <!-- 👉 Model -->
+                <VCol cols="12">
+                  <AppSelect
+                    v-model="model"
+                    label="Select Model"
+                    placeholder="Select Model"
+                    :rules="[requiredValidator]"
+                    :items="vehicleModels"
+                  />
+                </VCol>
 
-        <!-- 👉 Title -->
-    <AppDrawerHeaderSection
-      title="Add Vehicle"
-      @cancel="isAddVehicleDrawer = false"
-    />
-
-    <PerfectScrollbar :options="{ wheelPropagation: false }">
-      <VCard flat>
-        <VCardText>
-          <!-- 👉 Form -->
-          <VForm
-            ref="refForm"
-
-            v-model="isFormValid"
-            @submit.prevent="onSubmit"
-          >
-
-          <VRow>
-              <!-- 👉 VIN -->
-              <VCol cols="12">
-                <AppTextField
-                  v-model="vin"
-                  :rules="[requiredValidator]"
-                  label="VIN"
-                  placeholder="SAJWJ1CD4F8597404"
-                />
-              </VCol>
-
-              <!-- 👉 License Plate -->
-              <VCol cols="12">
-                <AppTextField
-                  v-model="licensePlate"
-                  :rules="[requiredValidator]"
-                  label="License Plate"
-                  placeholder="81-063-5933"
-                />
-              </VCol>
-
-              <!-- 👉 Mileage -->
-              <VCol cols="12">
-                <AppTextField
-                  v-model="mileage"
-                  :rules="[requiredValidator, numberValidator, positiveNumberValidator]"
-                  label="Mileage (km)"
-                  placeholder="5000"
-                  type="number"  
-                  min="0"
-
-                />
-              </VCol>
-
-              <!-- 👉 Purchase Date -->
-              <VCol cols="12">
-                <AppDateTimePicker
-                  v-model="purchaseDate"
-                  label="Purchase Date"
-                  placeholder="2025-02-21"
-                />
-              </VCol>
-
-              <!-- 👉 Type -->
-              <VCol cols="12">
-                <AppSelect
-                  v-model="type"
-                  label="Select Type"
-                  placeholder="Select Type"
-                  :rules="[requiredValidator]"
-                  :items="vehicleTypes"
-                />
-              </VCol>
-
-
-              <!-- 👉 Model -->
-              <VCol cols="12">
-                <AppSelect
-                  v-model="model"
-                  label="Select Model"
-                  placeholder="Select Model"
-                  :rules="[requiredValidator]"
-                  :items="vehicleModels"
-                />
-              </VCol>
-
-              <!-- 👉 Group -->
-              <VCol cols="12">
-                <AppSelect
-                  v-model="group"
-                  label="Select Group"
-                  placeholder="Select Group"
-                  :rules="[requiredValidator]"
-                  :items="vehicleGroups"
-                />
-              </VCol>
-
-
-
-              <!-- 👉 Submit and Cancel -->
-              <VCol cols="12">
-                <VBtn
-                  type="submit"
-                  class="me-3"
-                >
-                  Submit
-                </VBtn>
-                <VBtn
-                  type="reset"
-                  variant="outlined"
-                  color="secondary"
-                  @click="isAddVehicleDrawer = false"
-                >
-                  Cancel
-                </VBtn>
-              </VCol>
-            </VRow>
-
-          </VForm>
-        </VCardText>
-      </VCard>
-    </PerfectScrollbar>
-
-    </VNavigationDrawer>
-
-
-    <!-- 👉 Edit new vehicle-->
-
-    <VNavigationDrawer
-      v-model="isVehicleDialogDrawer"
-      temporary
-      :width="400"
-      location="end"
-      class="scrollable-content"
-    >
-
-        <!-- 👉 Title -->
-    <AppDrawerHeaderSection
-      title="Update Vehicle"
-      @cancel="isVehicleDialogDrawer = false"
-    />
-
-    <PerfectScrollbar :options="{ wheelPropagation: false }">
-      <VCard flat>
-        <VCardText>
-          <!-- 👉 Form -->
-          <VForm
-            ref="refForm"
-            :vehicle-data="vehicle"
-            v-model="isFormValid"
-            @submit.prevent="onSubmit"
-          >
-
-          <VRow>
-              <!-- 👉 VIN -->
-              <VCol cols="12">
-                <AppTextField
-                  v-model="vehicle.vin"
-                  :rules="[requiredValidator]"
-                  label="VIN"
-                  placeholder="SAJWJ1CD4F8597404"
-                />
-              </VCol>
-
-              <!-- 👉 License Plate -->
-              <VCol cols="12">
-                <AppTextField
-                  v-model="vehicle.licensePlate"
-                  :rules="[requiredValidator]"
-                  label="License Plate"
-                  placeholder="81-063-5933"
-                />
-              </VCol>
-
-              <!-- 👉 Mileage -->
-              <VCol cols="12">
-                <AppTextField
-                  v-model="vehicle.mileage"
-                  :rules="[requiredValidator, numberValidator, positiveNumberValidator]"
-                  label="Mileage (km)"
-                  placeholder="5000"
-                  type="number"  
-                  min="0"
-
-                />
-              </VCol>
-
-              <!-- 👉 Purchase Date -->
-              <VCol cols="12">
-                <AppDateTimePicker
-                  v-model="vehicle.purchaseDate"
-                  label="Purchase Date"
-                  placeholder="2025-02-22"
-                />
-              </VCol>
-
-              <!-- 👉 Type -->
-              <VCol cols="12">
-                <AppSelect
-                  v-model="type"
-                  label="Select Type"
-                  placeholder="Select Type"
-                  :rules="[requiredValidator]"
-                  :items="vehicleTypes"
-                />
-              </VCol>
-
-
-              <!-- 👉 Model -->
-              <VCol cols="12">
-                <AppSelect
-                  v-model="model"
-                  label="Select Model"
-                  placeholder="Select Model"
-                  :rules="[requiredValidator]"
-                  :items="vehicleModels"
-                />
-              </VCol>
-
-              <!-- 👉 Group -->
-              <VCol cols="12">
-                <AppSelect
-                  v-model="vehicle.group"
-                  label="Select Group"
-                  placeholder="Select Group"
-                  :rules="[requiredValidator]"
-                  :items="vehicleGroups"
-                />
-              </VCol>
+                <!-- 👉 Group -->
+                <VCol cols="12">
+                  <AppSelect
+                    v-model="group"
+                    label="Select Group"
+                    placeholder="Select Group"
+                    :rules="[requiredValidator]"
+                    :items="vehicleGroups"
+                  />
+                </VCol>
 
 
 
-              <!-- 👉 Submit and Cancel -->
-              <VCol cols="12">
-                <VBtn
-                  type="submit"
-                  class="me-3"
-                >
-                  Submit
-                </VBtn>
-                <VBtn
-                  type="reset"
-                  variant="outlined"
-                  color="secondary"
-                  @click="isAddVehicleDrawer = false"
-                >
-                  Cancel
-                </VBtn>
-              </VCol>
-            </VRow>
+                <!-- 👉 Submit and Cancel -->
+                <VCol cols="12">
+                  <VBtn
+                    type="submit"
+                    class="me-3"
+                  >
+                    Submit
+                  </VBtn>
+                  <VBtn
+                    type="reset"
+                    variant="outlined"
+                    color="secondary"
+                    @click="isAddVehicleDrawer = false"
+                  >
+                    Cancel
+                  </VBtn>
+                </VCol>
+              </VRow>
 
-          </VForm>
-        </VCardText>
-      </VCard>
-    </PerfectScrollbar>
+            </VForm>
+          </VCardText>
+        </VCard>
+      </PerfectScrollbar>
 
-    </VNavigationDrawer>
+      </VNavigationDrawer>
 
+
+      <!-- 👉 Edit new vehicle-->
+
+      <VNavigationDrawer
+        v-model="isVehicleDialogDrawer"
+        temporary
+        :width="400"
+        location="end"
+        class="scrollable-content"
+      >
+
+          <!-- 👉 Title -->
+      <AppDrawerHeaderSection
+        title="Update Vehicle"
+        @cancel="isVehicleDialogDrawer = false"
+      />
+
+      <PerfectScrollbar :options="{ wheelPropagation: false }">
+        <VCard flat>
+          <VCardText>
+            <!-- 👉 Form -->
+            <VForm
+              ref="refForm"
+              :vehicle-data="vehicle"
+              v-model="isFormValid"
+              @submit.prevent="onSubmit"
+            >
+
+            <VRow>
+                <!-- 👉 VIN -->
+                <VCol cols="12">
+                  <AppTextField
+                    v-model="vehicle.vin"
+                    :rules="[requiredValidator]"
+                    label="VIN"
+                    placeholder="SAJWJ1CD4F8597404"
+                  />
+                </VCol>
+
+                <!-- 👉 License Plate -->
+                <VCol cols="12">
+                  <AppTextField
+                    v-model="vehicle.licensePlate"
+                    :rules="[requiredValidator]"
+                    label="License Plate"
+                    placeholder="81-063-5933"
+                  />
+                </VCol>
+
+                <!-- 👉 Mileage -->
+                <VCol cols="12">
+                  <AppTextField
+                    v-model="vehicle.mileage"
+                    :rules="[requiredValidator, numberValidator, positiveNumberValidator]"
+                    label="Mileage (km)"
+                    placeholder="5000"
+                    type="number"  
+                    min="0"
+
+                  />
+                </VCol>
+
+                <!-- 👉 Purchase Date -->
+                <VCol cols="12">
+                  <AppDateTimePicker
+                    v-model="vehicle.purchaseDate"
+                    label="Purchase Date"
+                    placeholder="2025-02-22"
+                  />
+                </VCol>
+
+                <!-- 👉 Type -->
+                <VCol cols="12">
+                  <AppSelect
+                    v-model="type"
+                    label="Select Type"
+                    placeholder="Select Type"
+                    :rules="[requiredValidator]"
+                    :items="vehicleTypes"
+                  />
+                </VCol>
+
+
+                <!-- 👉 Model -->
+                <VCol cols="12">
+                  <AppSelect
+                    v-model="model"
+                    label="Select Model"
+                    placeholder="Select Model"
+                    :rules="[requiredValidator]"
+                    :items="vehicleModels"
+                  />
+                </VCol>
+
+                <!-- 👉 Group -->
+                <VCol cols="12">
+                  <AppSelect
+                    v-model="vehicle.group"
+                    label="Select Group"
+                    placeholder="Select Group"
+                    :rules="[requiredValidator]"
+                    :items="vehicleGroups"
+                  />
+                </VCol>
+
+
+
+                <!-- 👉 Submit and Cancel -->
+                <VCol cols="12">
+                  <VBtn
+                    type="submit"
+                    class="me-3"
+                  >
+                    Submit
+                  </VBtn>
+                  <VBtn
+                    type="reset"
+                    variant="outlined"
+                    color="secondary"
+                    @click="isAddVehicleDrawer = false"
+                  >
+                    Cancel
+                  </VBtn>
+                </VCol>
+              </VRow>
+
+            </VForm>
+          </VCardText>
+        </VCard>
+      </PerfectScrollbar>
+
+      </VNavigationDrawer>
+
+
+
+    <!-- 👉 Tabs headers-->
 
     <VCard class="pa-4">
       <div class="custom-tabs">
@@ -1070,10 +1322,11 @@ const openGroupModal = async (id: number) => {
           class="v-tabs-pill"
           border
         >
-        <VTab>Vehicles</VTab>
-        <VTab>Types</VTab>
-        <VTab>Models</VTab>
-        <VTab>Groups</VTab>
+        <VTab> <VIcon start icon="tabler-car"/> Vehicles</VTab>
+        <VTab> <VIcon start icon="tabler-firetruck"/>Types</VTab>
+        <VTab><VIcon start icon="tabler-brand-volkswagen"/>Models</VTab>
+        <VTab><VIcon start icon="tabler-car"/>Groups</VTab>
+        <VTab><VIcon start icon="tabler-home-link"/>Home-locations</VTab>
         </VTabs>
       </div>
     </VCard>
@@ -1316,7 +1569,7 @@ const openGroupModal = async (id: number) => {
           v-model:items-per-page="itemsPerPage"
           v-model:page="page"
           :items="types"
-          :items-length="totalVehicles"
+          :items-length="totalTypes"
           :headers="typeHeaders"
           class="text-no-wrap"
           @update:options="updateOptions"
@@ -1379,13 +1632,13 @@ const openGroupModal = async (id: number) => {
             <VDivider />
             <div class="d-flex align-center justify-sm-space-between justify-center flex-wrap gap-3 pa-5 pt-3">
               <p class="text-sm text-disabled mb-0">
-                {{ paginationMeta({ page, itemsPerPage }, totalVehicles) }}
+                {{ paginationMeta({ page, itemsPerPage }, totalTypes) }}
               </p>
 
               <VPagination
                 v-model="page"
-                :length="Math.ceil(totalVehicles / itemsPerPage)"
-                :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalVehicles / itemsPerPage)"
+                :length="Math.ceil(totalTypes / itemsPerPage)"
+                :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalTypes / itemsPerPage)"
               >
                 <template #prev="slotProps">
                   <VBtn
@@ -1446,10 +1699,10 @@ const openGroupModal = async (id: number) => {
             </div>
           </div>
 
-          <!-- 👉 Add Vehicle button -->
+          <!-- 👉 Add Model button -->
           <VBtn
             prepend-icon="tabler-category-plus"
-            @click="openAddVehicleDrawer"
+            @click="isAddModelModal = true"
           >
           Add Model
         </VBtn>
@@ -1462,12 +1715,12 @@ const openGroupModal = async (id: number) => {
           v-model:items-per-page="itemsPerPage"
           v-model:page="page"
           :items="models"
-          :items-length="totalVehicles"
+          :items-length="totalModels"
           :headers="modelHeaders"
           class="text-no-wrap"
           @update:options="updateOptions"
         >
-          <!-- 👉 Vehicle -->
+          <!-- 👉 Model -->
           <template #item.name="{ item }">
             <div class="d-flex align-center">
               <VAvatar
@@ -1497,7 +1750,7 @@ const openGroupModal = async (id: number) => {
           </template>
 
 
-          <!-- 👉 Mileage -->
+          <!-- 👉 Engine Type -->
           <template #item.engineType="{ item }">
             <VChip
                 color="info"
@@ -1509,7 +1762,7 @@ const openGroupModal = async (id: number) => {
             </template>
 
 
-          <!-- 👉 Type -->
+          <!-- 👉 Fuel Type -->
           <template #item.fuelType="{ item }">
             <VChip
                 color="success"
@@ -1522,7 +1775,7 @@ const openGroupModal = async (id: number) => {
 
           
 
-          <!-- 👉 Group -->
+          <!-- 👉 Make -->
           <template #item.make="{ item }">
             <VChip
                 color="warning"
@@ -1554,13 +1807,13 @@ const openGroupModal = async (id: number) => {
             <VDivider />
             <div class="d-flex align-center justify-sm-space-between justify-center flex-wrap gap-3 pa-5 pt-3">
               <p class="text-sm text-disabled mb-0">
-                {{ paginationMeta({ page, itemsPerPage }, totalVehicles) }}
+                {{ paginationMeta({ page, itemsPerPage }, totalModels) }}
               </p>
 
               <VPagination
                 v-model="page"
-                :length="Math.ceil(totalVehicles / itemsPerPage)"
-                :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalVehicles / itemsPerPage)"
+                :length="Math.ceil(totalModels / itemsPerPage)"
+                :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalModels / itemsPerPage)"
               >
                 <template #prev="slotProps">
                   <VBtn
@@ -1639,7 +1892,7 @@ const openGroupModal = async (id: number) => {
           v-model:items-per-page="itemsPerPage"
           v-model:page="page"
           :items="groups"
-          :items-length="totalVehicles"
+          :items-length="totalGroups"
           :headers="groupHeaders"
           class="text-no-wrap"
           @update:options="updateOptions"
@@ -1703,13 +1956,13 @@ const openGroupModal = async (id: number) => {
             <VDivider />
             <div class="d-flex align-center justify-sm-space-between justify-center flex-wrap gap-3 pa-5 pt-3">
               <p class="text-sm text-disabled mb-0">
-                {{ paginationMeta({ page, itemsPerPage }, totalVehicles) }}
+                {{ paginationMeta({ page, itemsPerPage }, totalGroups) }}
               </p>
 
               <VPagination
                 v-model="page"
-                :length="Math.ceil(totalVehicles / itemsPerPage)"
-                :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalVehicles / itemsPerPage)"
+                :length="Math.ceil(totalGroups / itemsPerPage)"
+                :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalGroups / itemsPerPage)"
               >
                 <template #prev="slotProps">
                   <VBtn
@@ -1751,8 +2004,8 @@ const openGroupModal = async (id: number) => {
 
 <style scoped>
 .custom-tabs {
-  border: 2px solid #ccc;
+  border: 1px solid #ccc;
   border-radius: 8px;
-  padding: 8px;
+  padding: 5px;
 }
 </style>
