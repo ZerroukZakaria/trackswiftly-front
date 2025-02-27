@@ -45,6 +45,10 @@ const locationHeaders = [
 ]
 
 
+const FuelTypes = ['PETROL', 'ELECTRIC', 'HYBRID', 'HYDROGEN', 'CNG', 'LPG', "BIOFUEL"]
+const EngineTypes = ['INTERNAL_COMBUSTION', 'ELECTRIC', 'HYBRID', 'FUEL_CELL']
+
+
 
 
 const currentTab = ref('vehicles')
@@ -77,6 +81,7 @@ const isEditGroupModal = ref(false)
 const models = ref([]);
 const groups = ref([]);
 const types = ref([]);
+const locations = ref([])
 
 const Model = ref();
 const Type = ref();
@@ -87,8 +92,10 @@ const vehicleModels = ref([]);
 const vehicleGroups = ref([]);
 const vehicleTypes = ref([]);
 const totalModels = ref(0);
+
 const totalGroups = ref(0);
 const totalTypes = ref(0);
+const totalLoactions = ref(0)
 
 
 //Add Type refs
@@ -108,6 +115,19 @@ const isUpdateGroupFormValid = ref(false)
 const refGroupUpdateForm = ref<VForm>()
 const groupNameUpdate = ref('')
 const groupDescriptionUpdate = ref('')
+
+
+//Edit model refs
+const isUpdateModelFormValid = ref(false)
+const refModelUpdateForm = ref<VForm>()
+const modelNameUpdate = ref('')
+const modelMakeUpdate = ref('')
+const modelYearUpdate = ref('')
+const modelEngineTypeUpdate = ref('')
+const modelFuelTypeUpdate = ref('')
+const modelTransmissionUpdate = ref('')
+const modelMaxPayloadWeightUpdate = ref('')
+const modelMaxVolumeUpdate = ref('')
 
 
 
@@ -143,6 +163,18 @@ const type = ref()
 const model = ref()
 const group = ref()
 
+//Update Vehicle refs
+const isFormUpdateValid = ref(false)
+const refUpdateForm = ref<VForm>()
+const licensePlateUpdate = ref('')
+const vinUpdate = ref('')
+const mileageUpdate = ref('')
+const purchaseDateUpdate = ref('')
+const typeUpdate = ref()
+const modelUpdate = ref()
+const groupUpdate = ref()
+
+
 // Data table options
 const itemsPerPage = ref(10)
 const page = ref(1)
@@ -155,8 +187,27 @@ onMounted(() => {
   getTypes();
   getModels();
   getGroups();
+  getLocations();
 })
 
+
+const populateVehicleTMG = async() => {
+  const fetchedModels = await getModels();
+    vehicleModels.value = fetchedModels.map(model => ({
+      title: model.name,
+      value: model.id
+    }))
+    const fetchedGroups = await getGroups();
+    vehicleGroups.value = fetchedGroups.map(group => ({
+      title: group.name,
+      value: group.id
+    }))
+    const fetchedTypes = await getTypes();
+    vehicleTypes.value = fetchedTypes.map(type => ({
+      title: type.name,
+      value: type.id,
+    }));
+}
 
 
 const onSubmit = async () => {
@@ -318,7 +369,6 @@ const addVehicleModel = async () => {
     };
 
   
-
   const response = await api.post('https://app.trackswiftly.com/models', [modelData], {
       headers: {
         'Accept': '*/*',
@@ -443,6 +493,26 @@ const getGroups= async () => {
 
     groups.value = response.data.content
     totalGroups.value = response.data.content.length
+
+    return response.data.content
+  } catch (error) {
+    console.error("Error fetching groups:", error.response?.data || error.message);
+  }
+}
+
+const getLocations = async() => {
+  try {
+    const response = await api.get(`https://app.trackswiftly.com/homelocations?page=${page.value - 1}&pageSize=${itemsPerPage.value}`, {
+      headers: {
+        'Accept': '*/*',
+      }
+    });
+
+
+    locations.value = response.data.content
+    totalLoactions.value = response.data.content.length
+
+    
 
     return response.data.content
   } catch (error) {
@@ -609,6 +679,60 @@ const deleteGroup = async (id: number) => {
   }
 }
 
+const deleteLocation = async(id: number) => {
+  const result = await Swal.fire({
+    title: `Are you sure?`,
+    text: `Do you really want to delete this location?`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#6c757d",
+    confirmButtonText: "Yes, delete it!",
+    cancelButtonText: "Cancel",
+    didOpen: () => {
+        document.querySelector('.swal2-confirm').style.color = 'white';
+        document.querySelector('.swal2-cancel').style.color = 'white';
+
+    }
+  });
+
+  if(result.isConfirmed) {
+      try {
+      await api.delete(`https://app.trackswiftly.com/homelocations/${id}`, {
+        headers: {
+          'Accept': '*/*',
+        }
+      });
+
+
+      Swal.fire({
+          icon: "success",
+          title: "Success!",
+          text: `Location deleted successfully.`,
+          didOpen: () => {
+          document.querySelector('.swal2-confirm').style.color = 'white';
+        }
+      });
+
+    getLocations();
+
+
+    } catch (error) {
+      console.error("Error fetching vehicles:", error.response?.data || error.message);
+
+      Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Failed to delete the location. Please try again.",
+          didOpen: () => {
+          document.querySelector('.swal2-confirm').style.color = 'white';
+        }
+      });
+    }
+  }
+
+}
+
 const getVehicle = async (id: number) => {
   try {
     const response = await api.get(`https://app.trackswiftly.com/vehicles/${id}`, {
@@ -618,8 +742,6 @@ const getVehicle = async (id: number) => {
     });
 
     vehicle.value = response.data[0]
-
-    console.log(vehicle.value);
     return vehicle.value;    
 
 
@@ -777,29 +899,102 @@ const updateOptions = (options: any) => {
 const openVehicleDrawer = async (id: number) => {
   console.log('Fetching vehicle:', id)
   await getVehicle(id)
+
+  populateVehicleTMG();
+
+
+  licensePlateUpdate.value = vehicle.value.licensePlate
+  vinUpdate.value = vehicle.value.vin
+  mileageUpdate.value = vehicle.value.mileage
+  purchaseDateUpdate.value = vehicle.value.purchaseDate
+  typeUpdate.value = vehicle.value.vehicleType.id
+  modelUpdate.value = vehicle.value.model.id
+  groupUpdate.value = vehicle.value.vhicleGroup.id
   isVehicleDialogDrawer.value = true
+}
+
+const updateVehicle = async () => {
+
+  let vehicleData = {};
+
+// Only include changed values
+if (licensePlateUpdate.value !== vehicle.value.licensePlate) {
+  vehicleData.licensePlate = licensePlateUpdate.value;
+}
+
+if (vinUpdate.value !== vehicle.value.vin) {
+  vehicleData.vin = vinUpdate.value;
+}
+
+if (mileageUpdate.value !== vehicle.value.mileage) {
+  vehicleData.mileage = mileageUpdate.value;
+}
+if (purchaseDateUpdate.value !== vehicle.value.purchaseDate) {
+  vehicleData.purchaseDate = purchaseDateUpdate.value;
+}
+if (typeUpdate.value !== vehicle.value.vehicleType.id) {
+  vehicleData.vehicleType = typeUpdate.value;
+}
+if (modelUpdate.value !== vehicle.value.model.id) {
+  vehicleData.model = modelUpdate.value;
+}
+if (groupUpdate.value !== vehicle.value.vhicleGroup.id) {
+  vehicleData.vhicleGroup = groupUpdate.value;
+}
+
+
+console.log(vehicleData)
+
+// If no values have changed, exit the function
+if (Object.keys(vehicleData).length === 0) {
+  isVehicleDialogDrawer.value = false;
+  return;
+}
+
+try {
+  const response = await api.put(
+    `https://app.trackswiftly.com/vehicles/${vehicle.value.id}`,
+    vehicleData,
+    {
+      headers: {
+        "Accept": "*/*",
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  Swal.fire({
+    icon: "success",
+    title: "Success!",
+    text: "Vehicle updated successfully.",
+    didOpen: () => {
+      document.querySelector(".swal2-confirm").style.color = "white";
+    },
+  });
+
+  isVehicleDialogDrawer.value = false;
+} catch (error) {
+  console.error("Error updating type:", error.response?.data || error.message);
+}
+
+
+
+}
+
+const submitUpdateVehicle = async() => {
+  const { valid } = await refUpdateForm.value?.validate();
+  if (valid) {
+    await updateVehicle();
+    getVehicles();
+    
+  } else {
+    console.log("Form is not valid");
+  }
 }
 
 const openAddVehicleDrawer = async () => {
 
-  const fetchedModels = await getModels();
-
-  vehicleModels.value = fetchedModels.map(model => ({
-    title: model.name,
-    value: model.id
-  }))
-
-  const fetchedGroups = await getGroups();
-  vehicleGroups.value = fetchedGroups.map(group => ({
-    title: group.name,
-    value: group.id
-  }))
-
-  const fetchedTypes = await getTypes();
-  vehicleTypes.value = fetchedTypes.map(type => ({
-    title: type.name,
-    value: type.id,
-  }));
+  populateVehicleTMG();
 
   isAddVehicleDrawer.value = true 
 
@@ -878,7 +1073,103 @@ const submitUpdateType = async() => {
 
 const openModelModal = async (id: number) => {
   console.log('Fetching model id:', id)
+  await getModel(id);
+  
 
+  modelNameUpdate.value = Model.value.name
+  modelMakeUpdate.value = Model.value.make
+  modelYearUpdate.value = Model.value.year
+  modelEngineTypeUpdate.value = Model.value.engineType
+  modelFuelTypeUpdate.value = Model.value.fuelType
+  modelTransmissionUpdate.value = Model.value.transmission
+  modelMaxPayloadWeightUpdate.value = Model.value.maxPayloadWeight
+  modelMaxVolumeUpdate.value = Model.value.maxVolume
+  isEditModelModal.value = true
+
+
+}
+
+const updateModel = async () => {
+
+  console.log(modelYearUpdate.value)
+
+  let ModelData = {};
+
+  if (modelNameUpdate.value !== Model.value.name) {
+    ModelData.name = modelNameUpdate.value;
+  }
+
+  if (modelMakeUpdate.value !== Model.value.make) {
+    ModelData.make = modelMakeUpdate.value;
+  }
+
+  if (modelEngineTypeUpdate.value !== Model.value.engineType) {
+    ModelData.engineType = modelEngineTypeUpdate.value;
+  }
+
+  if (modelFuelTypeUpdate.value !== Model.value.fuelType) {
+    ModelData.fuelType = modelFuelTypeUpdate.value;
+  }
+
+  if (modelYearUpdate.value !== Model.value.year) {
+    ModelData.year = modelYearUpdate.value;
+  }
+
+  if (modelMaxVolumeUpdate.value !== Model.value.maxPayloadWeight) {
+    ModelData.maxPayloadWeight = modelMaxVolumeUpdate.value;
+  }
+
+
+  if (modelMaxVolumeUpdate.value !== Model.value.maxVolume) {
+    ModelData.maxVolume = modelMaxVolumeUpdate.value;
+  }
+
+
+
+  if (Object.keys(ModelData).length === 0) {
+    isEditModelModal.value = false;
+    return;
+  }
+
+  try {
+    const response = await api.put(
+      `https://app.trackswiftly.com/models/${Model.value.id}`,
+      ModelData,
+      {
+        headers: {
+          "Accept": "*/*",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    Swal.fire({
+      icon: "success",
+      title: "Success!",
+      text: "Type updated successfully.",
+      didOpen: () => {
+        document.querySelector(".swal2-confirm").style.color = "white";
+      },
+    });
+
+    isEditModelModal.value = false;
+
+  } catch (error) {
+    console.error("Error updating type:", error.response?.data || error.message);
+  }
+
+}
+
+const submitUpdateModel = async() => {
+
+  const { valid } = await refModelUpdateForm.value?.validate();
+  if (valid) {
+    await updateModel();
+    getModels();
+    
+  } else {
+    console.log("Form is not valid");
+  }
 }
  
 const openGroupModal = async (id: number) => {
@@ -949,8 +1240,6 @@ const submitUpdateGroup = async() => {
   }
 }
  
-
-
 </script>
 
 
@@ -1062,9 +1351,142 @@ const submitUpdateGroup = async() => {
         </VDialog>
 
 
+        <!-- 👉 Edit Model-->
+
+        <VDialog persistent  v-model="isEditModelModal"
+        max-width="600"
+        >
+
+        <DialogCloseBtn @click="isEditModelModal = !isEditModelModal" />
+
+            <!-- Dialog Content -->
+            <VCard title="Update Model">
+              <VCardText>
+                <VForm ref="refModelUpdateForm" v-model="isUpdateModelFormValid">
+                  <VRow>
+                    <VCol
+                      cols="12"
+                      sm="6"
+                    >
+                      <AppTextField
+                        v-model="modelNameUpdate"
+                        label="Name"
+                        placeholder="Blackwood"
+                        :rules = "[requiredValidator]"
+
+                      />
+                    </VCol>
+                    <VCol
+                      cols="12"
+                      sm="6"
+                    >
+                      <AppTextField
+                        v-model="modelMakeUpdate"
+                        label="Make"
+                        placeholder="Lincoln"
+                        :rules = "[requiredValidator]"
+
+                      />
+                    </VCol>
+                    <VCol
+                      cols="12"
+                      sm="6"
+                      md="4"
+                    >
 
 
+                      <AppSelect
+                      v-model="modelEngineTypeUpdate"
+                      label="Engine Type"
+                      placeholder="HYBRID"
+                      :rules="[requiredValidator]"
+                      :items="EngineTypes"
+                      />
 
+                    
+                    </VCol>
+                    <VCol
+                      cols="12"
+                      sm="6"
+                      md="4"
+                    >
+
+
+                    <AppSelect
+                      v-model="modelFuelTypeUpdate"
+                      label="Fuel Type"
+                      placeholder="PETROL"
+                      :rules = "[requiredValidator]"
+                      :items = "FuelTypes"
+                    
+                    />
+
+                    </VCol>
+                    <VCol
+                      cols="12"
+                      sm="6"
+                      md="4"
+                    >
+                      <AppTextField
+                        v-model="modelTransmissionUpdate"
+                        label="Transmission"
+                        placeholder="Doe"
+                      />
+                    </VCol>
+                    <VCol cols="12">
+                      <AppDateTimePicker
+                      v-model="modelYearUpdate"
+                      label="Year"
+                      placeholder="2025-02-21"
+                      :rules = "[]"
+                    />
+                    </VCol>
+                    <VCol
+                      cols="12"
+                      sm="6"
+                    >
+                      <AppTextField
+                        v-model="modelMaxVolumeUpdate"
+                        label="Max volume (m³)"
+                        type="number"
+                        placeholder="3.2"
+                        :rules = "[positiveNumberValidator, numberValidator]"
+
+                  
+                      />
+                    </VCol>
+                    <VCol
+                      cols="12"
+                      sm="6"
+                    >
+                      <AppTextField
+                        v-model="modelMaxPayloadWeightUpdate"
+                        label="Max payload weight (Kg)"
+                        type="number"
+                        placeholder="712"
+                        :rules = "[positiveNumberValidator, numberValidator]"
+
+                      />
+                    </VCol>
+                  </VRow>
+                </VForm>
+              </VCardText>
+
+              <VCardText class="d-flex justify-end flex-wrap gap-3">
+                <VBtn
+                  variant="tonal"
+                  color="secondary"
+                  @click="isEditModelModal = false"
+                >
+                  Close
+                </VBtn>
+                <VBtn @click="submitUpdateModel">
+                  Update
+                </VBtn>
+              </VCardText>
+            </VCard>
+          
+        </VDialog>
 
 
 
@@ -1163,24 +1585,28 @@ const submitUpdateGroup = async() => {
                     sm="6"
                     md="4"
                   >
-                    <AppTextField
+
+                    <AppSelect
                       v-model="modelEngineType"
                       label="Engine Type"
                       placeholder="HYBRID"
                       :rules = "[requiredValidator]"
-
+                      :items = "EngineTypes"
                     />
+
                   </VCol>
                   <VCol
                     cols="12"
                     sm="6"
                     md="4"
                   >
-                    <AppTextField
+
+                    <AppSelect
                       v-model="modelFuelType"
                       label="Fuel Type"
                       placeholder="PETROL"
                       :rules = "[requiredValidator]"
+                      :items = "FuelTypes"
 
                     />
                   </VCol>
@@ -1457,17 +1883,15 @@ const submitUpdateGroup = async() => {
           <VCardText>
             <!-- 👉 Form -->
             <VForm
-              ref="refForm"
-              :vehicle-data="vehicle"
-              v-model="isFormValid"
-              @submit.prevent="onSubmit"
+              ref="refUpdateForm"
+              v-model="isFormUpdateValid"
             >
 
             <VRow>
                 <!-- 👉 VIN -->
                 <VCol cols="12">
                   <AppTextField
-                    v-model="vehicle.vin"
+                    v-model="vinUpdate"
                     :rules="[requiredValidator]"
                     label="VIN"
                     placeholder="SAJWJ1CD4F8597404"
@@ -1477,7 +1901,7 @@ const submitUpdateGroup = async() => {
                 <!-- 👉 License Plate -->
                 <VCol cols="12">
                   <AppTextField
-                    v-model="vehicle.licensePlate"
+                    v-model="licensePlateUpdate"
                     :rules="[requiredValidator]"
                     label="License Plate"
                     placeholder="81-063-5933"
@@ -1487,7 +1911,7 @@ const submitUpdateGroup = async() => {
                 <!-- 👉 Mileage -->
                 <VCol cols="12">
                   <AppTextField
-                    v-model="vehicle.mileage"
+                    v-model="mileageUpdate"
                     :rules="[requiredValidator, numberValidator, positiveNumberValidator]"
                     label="Mileage (km)"
                     placeholder="5000"
@@ -1500,7 +1924,7 @@ const submitUpdateGroup = async() => {
                 <!-- 👉 Purchase Date -->
                 <VCol cols="12">
                   <AppDateTimePicker
-                    v-model="vehicle.purchaseDate"
+                    v-model="purchaseDateUpdate"
                     label="Purchase Date"
                     placeholder="2025-02-22"
                   />
@@ -1509,7 +1933,7 @@ const submitUpdateGroup = async() => {
                 <!-- 👉 Type -->
                 <VCol cols="12">
                   <AppSelect
-                    v-model="type"
+                    v-model="typeUpdate"
                     label="Select Type"
                     placeholder="Select Type"
                     :rules="[requiredValidator]"
@@ -1521,7 +1945,7 @@ const submitUpdateGroup = async() => {
                 <!-- 👉 Model -->
                 <VCol cols="12">
                   <AppSelect
-                    v-model="model"
+                    v-model="modelUpdate"
                     label="Select Model"
                     placeholder="Select Model"
                     :rules="[requiredValidator]"
@@ -1532,7 +1956,7 @@ const submitUpdateGroup = async() => {
                 <!-- 👉 Group -->
                 <VCol cols="12">
                   <AppSelect
-                    v-model="vehicle.group"
+                    v-model="groupUpdate"
                     label="Select Group"
                     placeholder="Select Group"
                     :rules="[requiredValidator]"
@@ -1545,10 +1969,10 @@ const submitUpdateGroup = async() => {
                 <!-- 👉 Submit and Cancel -->
                 <VCol cols="12">
                   <VBtn
-                    type="submit"
                     class="me-3"
+                    @click = "submitUpdateVehicle"
                   >
-                    Submit
+                    Update
                   </VBtn>
                   <VBtn
                     type="reset"
@@ -2048,7 +2472,7 @@ const submitUpdateGroup = async() => {
 
 
           <!-- edit user role -->
-          <IconBtn @click="openVehicleDrawer(item.id)">
+          <IconBtn @click="openModelModal(item.id)">
             <VIcon icon="tabler-edit" />
           </IconBtn>
 
@@ -2351,7 +2775,7 @@ const submitUpdateGroup = async() => {
           </IconBtn>
 
             <!-- delete user  -->
-            <IconBtn @click="deleteGroup(item.id)">
+            <IconBtn @click="deleteLocation(item.id)">
               <VIcon icon="tabler-trash" />
             </IconBtn>
 
