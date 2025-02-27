@@ -66,6 +66,11 @@ const isAddTypeModal = ref(false)
 const isAddModelModal = ref(false)
 const isAddGroupModal = ref(false)
 
+const isEditTypeModal = ref(false)
+const isEditModelModal = ref(false)
+const isEditGroupModal = ref(false)
+
+
 
 
 
@@ -92,8 +97,21 @@ const refTypeForm = ref<VForm>();
 const typeName = ref('')
 const typeDescription = ref('')
 
-//Add Model refs
+//Edit Type refs
+const isUpdateTypeFormValid = ref(false)
+const refTypeUpdateForm = ref<VForm>()
+const typeNameUpdate = ref('')
+const typeDescriptionUpdate = ref('')
 
+//Edit group refs
+const isUpdateGroupFormValid = ref(false)
+const refGroupUpdateForm = ref<VForm>()
+const groupNameUpdate = ref('')
+const groupDescriptionUpdate = ref('')
+
+
+
+//Add Model refs
 const isAddModelFormValid = ref(false)
 const refModelForm = ref('')
 const modelName = ref('')
@@ -177,7 +195,6 @@ const submitAddVehicleType = async() => {
     console.log("Form is not valid");
   }
 }
-
 
 const submitAddVehicleModel = async() => {
   const { valid } = await refModelForm.value?.validate();
@@ -629,7 +646,7 @@ const getModel = async(id: number) => {
 
 
   } catch (error) {
-    console.error("Error fetching vehicle:", error.response?.data || error.message);
+    console.error("Error fetching model:", error.response?.data || error.message);
 
 
   }
@@ -647,7 +664,7 @@ const getType = async(id: number) => {
     return Type.value;    
 
   } catch (error) {
-    console.error("Error fetching vehicle:", error.response?.data || error.message);
+    console.error("Error fetching type:", error.response?.data || error.message);
 
 
   }
@@ -667,7 +684,7 @@ const getGroup = async(id: number) => {
 
 
   } catch (error) {
-    console.error("Error fetching vehicle:", error.response?.data || error.message);
+    console.error("Error fetching group:", error.response?.data || error.message);
 
 
   }
@@ -790,19 +807,146 @@ const openAddVehicleDrawer = async () => {
 
 
 const openTypeModal = async (id: number) => {
-  console.log('Fetching vehicle:', id)
+  console.log('Fetching type:', id)
+  await getType(id)
+  typeNameUpdate.value = Type.value.name
+  typeDescriptionUpdate.value = Type.value.description
+  isEditTypeModal.value = true
+
+
   
   
 }
- 
+
+const updateType = async () => {
+  let typeData = {};
+
+  // Only include changed values
+  if (typeNameUpdate.value !== Type.value.name) {
+    typeData.name = typeNameUpdate.value;
+  }
+
+  if (typeDescriptionUpdate.value !== Type.value.description) {
+    typeData.description = typeDescriptionUpdate.value;
+  }
+
+  // If no values have changed, exit the function
+  if (Object.keys(typeData).length === 0) {
+    isEditTypeModal.value = false;
+    return;
+  }
+
+  try {
+    const response = await api.put(
+      `https://app.trackswiftly.com/types/${Type.value.id}`,
+      typeData,
+      {
+        headers: {
+          "Accept": "*/*",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    Swal.fire({
+      icon: "success",
+      title: "Success!",
+      text: "Type updated successfully.",
+      didOpen: () => {
+        document.querySelector(".swal2-confirm").style.color = "white";
+      },
+    });
+
+    isEditTypeModal.value = false;
+  } catch (error) {
+    console.error("Error updating type:", error.response?.data || error.message);
+  }
+};
+
+const submitUpdateType = async() => {
+
+  const { valid } = await refTypeUpdateForm.value?.validate();
+  if (valid) {
+    await updateType();
+    getTypes();
+    
+  } else {
+    console.log("Form is not valid");
+  }
+}
+  
+
 const openModelModal = async (id: number) => {
-  console.log('Fetching vehicle:', id)
+  console.log('Fetching model id:', id)
 
 }
  
 const openGroupModal = async (id: number) => {
-  console.log('Fetching vehicle:', id)
+  console.log('Fetching group id:', id)
+  await getGroup(id)
+  groupNameUpdate.value = Group.value.name
+  groupDescriptionUpdate.value = Group.value.description
+  isEditGroupModal.value = true
 
+}
+
+const updateGroup = async () => {
+  let groupData = {};
+
+  // Only include changed values
+  if (groupNameUpdate.value !== Group.value.name) {
+    groupData.name = groupNameUpdate.value;
+  }
+
+  if (groupDescriptionUpdate.value !== Group.value.description) {
+    groupData.description = groupDescriptionUpdate.value;
+  }
+
+  // If no values have changed, exit the function
+  if (Object.keys(groupData).length === 0) {
+    isEditGroupModal.value = false;
+    return;
+  }
+
+  console.log(groupData)
+
+  try {
+    const response = await api.put(
+      `https://app.trackswiftly.com/groups/${Group.value.id}`,
+      groupData,
+      {
+        headers: {
+          "Accept": "*/*",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    Swal.fire({
+      icon: "success",
+      title: "Success!",
+      text: "Group updated successfully.",
+      didOpen: () => {
+        document.querySelector(".swal2-confirm").style.color = "white";
+      },
+    });
+
+    isEditGroupModal.value = false;
+  } catch (error) {
+    console.error("Error updating type:", error.response?.data || error.message);
+  }
+}
+
+const submitUpdateGroup = async() => {
+
+  const { valid } = await refGroupUpdateForm.value?.validate();
+  if (valid) {
+    await updateGroup();
+    getGroups();
+    
+  } else {
+    console.log("Form is not valid");
+  }
 }
  
 
@@ -811,6 +955,119 @@ const openGroupModal = async (id: number) => {
 
 
 <template>
+
+       <!-- 👉 Edit type-->
+
+        <VDialog persistent v-model="isEditTypeModal"
+        max-width="600"
+        >
+
+        <DialogCloseBtn @click="isEditTypeModal = !isEditTypeModal" />
+
+          <!-- Dialog Content -->
+          <VCard title="Update Type">
+            <VCardText>
+              <VForm ref="refTypeUpdateForm" v-model="isUpdateGroupFormValid">
+                <VRow>
+                  <VCol cols="12">
+                    <AppTextField
+                      v-model="typeNameUpdate"
+                      label="Name"
+                      placeholder="Name"
+                      :rules = "[requiredValidator, alphaValidator]"
+                    />
+                  </VCol>
+                  <VCol cols="12">
+                    <AppTextarea
+                     v-model="typeDescriptionUpdate"
+                      label="Description"
+                      auto-grow
+                      clearable
+                      clear-icon="tabler-circle-x"
+                      counter
+                      :rules = "[alphaWithSpacesValidator]"
+                      />
+                  </VCol>
+                </VRow>
+              </VForm>
+            </VCardText>
+
+            <VCardText class="d-flex justify-end flex-wrap gap-3">
+              <VBtn
+                variant="tonal"
+                color="secondary"
+                @click="isEditTypeModal = false"
+              >
+                Close
+              </VBtn>
+              <VBtn @click="submitUpdateType">
+                Update
+              </VBtn>
+            </VCardText>
+          </VCard>
+        
+        </VDialog>
+
+
+        <!-- 👉 Edit Group-->
+
+        <VDialog persistent v-model="isEditGroupModal"
+        max-width="600"
+        >
+
+        <DialogCloseBtn @click="isEditGroupModal = !isEditGroupModal" />
+
+          <!-- Dialog Content -->
+          <VCard title="Update Group">
+            <VCardText>
+              <VForm ref="refGroupUpdateForm" v-model="isUpdateTypeFormValid">
+                <VRow>
+                  <VCol cols="12">
+                    <AppTextField
+                      v-model="groupNameUpdate"
+                      label="Name"
+                      placeholder="Name"
+                      :rules = "[requiredValidator, alphaValidator]"
+                    />
+                  </VCol>
+                  <VCol cols="12">
+                    <AppTextarea
+                     v-model="groupDescriptionUpdate"
+                      label="Description"
+                      auto-grow
+                      clearable
+                      clear-icon="tabler-circle-x"
+                      counter
+                      :rules = "[alphaWithSpacesValidator]"
+                      />
+                  </VCol>
+                </VRow>
+              </VForm>
+            </VCardText>
+
+            <VCardText class="d-flex justify-end flex-wrap gap-3">
+              <VBtn
+                variant="tonal"
+                color="secondary"
+                @click="isEditGroupModal = false"
+              >
+                Close
+              </VBtn>
+              <VBtn @click="submitUpdateGroup">
+                Update
+              </VBtn>
+            </VCardText>
+          </VCard>
+        
+        </VDialog>
+
+
+
+
+
+
+
+
 
       <!-- 👉 Add new type-->
 
@@ -1616,7 +1873,7 @@ const openGroupModal = async (id: number) => {
 
 
            <!-- edit user role -->
-          <IconBtn @click="openVehicleDrawer(item.id)">
+          <IconBtn @click="openTypeModal(item.id)">
             <VIcon icon="tabler-edit" />
           </IconBtn>
 
@@ -1846,6 +2103,155 @@ const openGroupModal = async (id: number) => {
 
 
       <VWindowItem value="groups">
+        <VCard>
+          <VCardText class="d-flex flex-wrap py-4 gap-4">
+          <div class="me-3 d-flex gap-3">
+            <AppSelect
+              :model-value="itemsPerPage"
+              :items="[
+                { value: 10, title: '10' },
+                { value: 25, title: '25' },
+                { value: 50, title: '50' },
+                { value: 100, title: '100' },
+                { value: -1, title: 'All' },
+              ]"
+              style="inline-size: 6.25rem;"
+              @update:model-value="itemsPerPage = parseInt($event, 10)"
+            />
+          </div>
+          <VSpacer />
+
+          <div class="app-user-search-filter d-flex align-center flex-wrap gap-4">
+            <!-- 👉 Search  -->
+            <div style="inline-size: 10rem;">
+              <AppTextField
+                v-model="searchQuery"
+                placeholder="Search"
+                density="compact"
+              />
+            </div>
+          </div>
+
+          <!-- 👉 Add Vehicle button -->
+          <VBtn
+            prepend-icon="tabler-category-plus"
+            @click="isAddGroupModal = true"
+          >
+          Add Group
+        </VBtn>
+
+        </VCardText>
+
+        <VDivider />
+
+        <!-- SECTION datatable -->
+        <VDataTableServer
+          v-model:items-per-page="itemsPerPage"
+          v-model:page="page"
+          :items="groups"
+          :items-length="totalGroups"
+          :headers="groupHeaders"
+          class="text-no-wrap"
+          @update:options="updateOptions"
+        >
+          <!-- 👉 Vehicle -->
+          <template #item.name="{ item }">
+            <div class="d-flex align-center">
+              <VAvatar
+                size="34"
+                :variant="!item.avatar ? 'tonal' : undefined"
+                :color="!item.avatar ? 'primary' : undefined"
+
+                class=" cursor-pointer over:opacity-80 transition duration-200 me-3"
+              >
+                <VImg
+                  v-if="item.avatar"
+                  :src="item.avatar"
+                />
+                <span v-else>{{ avatarText(item.name) }}</span>
+              </VAvatar>
+              <div class="d-flex flex-column">
+                <h6 class="text-base">
+                  <span
+                    class="cursor-pointer over:opacity-80 transition duration-200 font-weight-medium text-link"
+                  >
+                    {{ item.name }}
+                  </span>
+                </h6>
+              </div>
+            </div>
+          </template>
+
+
+                  <!-- 👉 Mileage -->
+          <template #item.mileage="{ item }">
+            <div class="d-flex align-center gap-4">
+
+              <span>{{ item.mileage }} km</span>
+            </div>
+          </template>
+
+
+          
+          <!-- 👉 Actions -->
+          <template #item.actions="{ item }">
+
+          <!-- edit user role -->
+          <IconBtn @click="openGroupModal(item.id)">
+            <VIcon icon="tabler-edit" />
+          </IconBtn>
+
+            <!-- delete user  -->
+            <IconBtn @click="deleteGroup(item.id)">
+              <VIcon icon="tabler-trash" />
+            </IconBtn>
+
+          </template>
+
+          <!-- pagination -->
+          <template #bottom>
+            <VDivider />
+            <div class="d-flex align-center justify-sm-space-between justify-center flex-wrap gap-3 pa-5 pt-3">
+              <p class="text-sm text-disabled mb-0">
+                {{ paginationMeta({ page, itemsPerPage }, totalGroups) }}
+              </p>
+
+              <VPagination
+                v-model="page"
+                :length="Math.ceil(totalGroups / itemsPerPage)"
+                :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalGroups / itemsPerPage)"
+              >
+                <template #prev="slotProps">
+                  <VBtn
+                    variant="tonal"
+                    color="default"
+                    v-bind="slotProps"
+                    :icon="false"
+                  >
+                    Previous
+                  </VBtn>
+                </template>
+
+                <template #next="slotProps">
+                  <VBtn
+                    variant="tonal"
+                    color="default"
+                    v-bind="slotProps"
+                    :icon="false"
+                  >
+                    Next
+                  </VBtn>
+                </template>
+              </VPagination>
+            </div>
+          </template>
+        </VDataTableServer>
+        <!-- SECTION -->
+          
+        </VCard>
+      </VWindowItem>
+
+      <VWindowItem value="locations">
         <VCard>
           <VCardText class="d-flex flex-wrap py-4 gap-4">
           <div class="me-3 d-flex gap-3">
