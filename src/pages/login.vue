@@ -82,20 +82,21 @@ const login = async () => {
   }
 }
 
-const onSubmit = () => {
-  refVForm.value?.validate()
-    .then(({ valid: isValid }) => {
-      if (isValid)
-      loginWithKeycloakOld()
-      login()
-      
-    })
-}
+const onSubmit = async () => {
+  const result = await refVForm.value?.validate();
+
+  if (result?.valid) {
+    // await loginWithKeycloakNewWindow();
+    loginWithKeycloakOld()
+    login()
+  }
+};
 
 
 
 const loginWithKeycloakOld = async () => {
-  try {
+  try {    
+
     await keycloak.login({
       redirectUri: window.location.origin,
       prompt: 'login',
@@ -111,9 +112,10 @@ const loginWithKeycloakOld = async () => {
 
 
 const loginWithKeycloakNewWindow = async () => {
+  
   try {
     // Generate the login URL manually
-    const loginUrl = keycloak.createLoginUrl({
+    const loginUrl = await keycloak.createLoginUrl({
       redirectUri: window.location.origin, // Ensure it's correctly set in Keycloak
       prompt: 'login', // Forces login prompt
       scope: 'openid',
@@ -134,19 +136,6 @@ const loginWithKeycloakNewWindow = async () => {
         clearInterval(checkInterval);
         console.log('Login window closed. Checking authentication...');
 
-        // Instead of calling init(), refresh the token
-        keycloak.updateToken(5).then((refreshed) => {
-          if (refreshed) {
-            console.log('Token refreshed successfully!');
-          } else {
-            console.log('Token not refreshed, user may not be authenticated.');
-          }
-          // Store tokens in localStorage
-          localStorage.setItem('access_token', keycloak.token);
-          localStorage.setItem('refresh_token', keycloak.refreshToken);
-        }).catch(error => {
-          console.error('Failed to refresh token:', error);
-        });
       }
     }, 1000);
   } catch (error) {

@@ -2141,7 +2141,7 @@ const openLocationModal = async(id:number) => {
         <VTab> <VIcon start icon="tabler-car"/> Vehicles</VTab>
         <VTab> <VIcon start icon="tabler-firetruck"/>Types</VTab>
         <VTab><VIcon start icon="tabler-brand-volkswagen"/>Models</VTab>
-        <VTab><VIcon start icon="tabler-car"/>Groups</VTab>
+        <VTab><VIcon start icon="tabler-sitemap"/>Groups</VTab>
         <VTab><VIcon start icon="tabler-home-link"/>Home-locations</VTab>
         </VTabs>
       </div>
