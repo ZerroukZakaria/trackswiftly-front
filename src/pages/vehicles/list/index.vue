@@ -9,7 +9,7 @@ import api from '@/utils/axios'
 
 const headers = [
   { title: 'Plate', key: 'plate' },
-  { title: 'Mileage', key: 'mileage' },
+  { title: 'Description', key: 'mileage' },
   { title: 'Type', key: 'type' },
   { title: 'Group', key: 'group' },
   { title: 'Model', key: 'model' },
@@ -40,15 +40,14 @@ const groupHeaders = [
 
 const locationHeaders = [
   { title: 'Name', key: 'name' },
-  { title: 'Description', key: 'description' },
+  { title: 'Longitude', key: 'longitude' },
+  { title: 'Latitude', key: 'latitude' },
   { title: 'Actions', key: 'actions', sortable: false },
 ]
 
 
 const FuelTypes = ['PETROL', 'ELECTRIC', 'HYBRID', 'HYDROGEN', 'CNG', 'LPG', "BIOFUEL"]
 const EngineTypes = ['INTERNAL_COMBUSTION', 'ELECTRIC', 'HYBRID', 'FUEL_CELL']
-
-
 
 
 const currentTab = ref('vehicles')
@@ -69,10 +68,12 @@ const isAddVehicleDrawer = ref(false)
 const isAddTypeModal = ref(false)
 const isAddModelModal = ref(false)
 const isAddGroupModal = ref(false)
+const isAddLocationModal = ref(false)
 
 const isEditTypeModal = ref(false)
 const isEditModelModal = ref(false)
 const isEditGroupModal = ref(false)
+const isEditLocationModal = ref(false)
 
 
 
@@ -86,6 +87,7 @@ const locations = ref([])
 const Model = ref();
 const Type = ref();
 const Group = ref();
+const Location = ref();
 
 
 const vehicleModels = ref([]);
@@ -95,7 +97,15 @@ const totalModels = ref(0);
 
 const totalGroups = ref(0);
 const totalTypes = ref(0);
-const totalLoactions = ref(0)
+const totalLocations = ref(0)
+
+
+//Add Locaiton refs
+const isAddLocationFormValid = ref(false)
+const refLocationForm = ref<VForm>();
+const locationName = ref('')
+const locationLat = ref('')
+const locationLong = ref('')
 
 
 //Add Type refs
@@ -180,6 +190,29 @@ const itemsPerPage = ref(10)
 const page = ref(1)
 const sortBy = ref()
 const orderBy = ref()
+
+const itemsPerPageType = ref(10)
+const pageType = ref(1)
+const sortByType = ref()
+const orderByType = ref()
+
+const itemsPerPageGroup = ref(10)
+const pageGroup = ref(1)
+const sortByGroup = ref()
+const orderByGroup = ref()
+
+const itemsPerPageModel = ref(10)
+const pageModel = ref(1)
+const sortByModel = ref()
+const orderByModel = ref()
+
+const itemsPerPageLocation = ref(10)
+const pageLocation = ref(1)
+const sortByLocation = ref()
+const orderByLocation = ref()
+
+
+
 
 
 onMounted(() => {
@@ -275,8 +308,10 @@ const saveVehicle = async () => {
       purchaseDate: formattedPurchaseDate,
       vehicleTypeId: type.value, 
       modelId: model.value, 
-      vehicleGroupId: group.value  
+      vehicleGroupId: group.value ?? 1
     };
+
+
 
     // Send the API request
     const response = await api.post('https://app.trackswiftly.com/vehicles', [vehicleData], {
@@ -444,16 +479,35 @@ const addVehicleGroup = async () => {
 
 }
 
+const getVehicles = async () => {
+  try {
+    const response = await api.get(`https://app.trackswiftly.com/vehicles?page=${page.value - 1}&pageSize=${itemsPerPage.value}`, {
+      headers: {
+        'Accept': '*/*',
+      }
+    });
+
+    
+    vehicles.value = response.data.content
+    totalVehicles.value = response.data.totalElements 
+
+
+  } catch (error) {
+    console.error("Error fetching vehicles:", error.response?.data || error.message);
+  }
+};
+
+
 const getModels = async () => {
   try {
-    const response = await api.get(`https://app.trackswiftly.com/models?page=${page.value - 1}&pageSize=${itemsPerPage.value}`, {
+    const response = await api.get(`https://app.trackswiftly.com/models?page=${pageModel.value - 1}&pageSize=${itemsPerPageModel.value}`, {
       headers: {
         'Accept': '*/*',
       }
     });
 
     models.value = response.data.content
-    totalModels.value = response.data.content.length
+    totalModels.value = response.data.totalElements || 0;
 
     return response.data.content
   } catch (error) {
@@ -468,14 +522,14 @@ const getModels = async () => {
 }
 const getTypes = async () => {
   try {
-    const response = await api.get(`https://app.trackswiftly.com/types?page=${page.value - 1}&pageSize=${itemsPerPage.value}`, {
+    const response = await api.get(`https://app.trackswiftly.com/types?page=${pageType.value - 1}&pageSize=${itemsPerPageType.value}`, {
       headers: {
         'Accept': '*/*',
       }
     });
 
     types.value = response.data.content
-    totalTypes.value = response.data.content.length
+    totalTypes.value = response.data.totalElements || 0;
     return response.data.content
   } catch (error) {
     console.error("Error fetching types:", error.response?.data || error.message);
@@ -484,15 +538,14 @@ const getTypes = async () => {
 
 const getGroups= async () => {
   try {
-    const response = await api.get(`https://app.trackswiftly.com/groups?page=${page.value - 1}&pageSize=${itemsPerPage.value}`, {
+    const response = await api.get(`https://app.trackswiftly.com/groups?page=${pageGroup.value - 1}&pageSize=${itemsPerPageGroup.value}`, {
       headers: {
         'Accept': '*/*',
       }
     });
 
-
     groups.value = response.data.content
-    totalGroups.value = response.data.content.length
+    totalGroups.value = response.data.totalElements || 0;
 
     return response.data.content
   } catch (error) {
@@ -502,7 +555,7 @@ const getGroups= async () => {
 
 const getLocations = async() => {
   try {
-    const response = await api.get(`https://app.trackswiftly.com/homelocations?page=${page.value - 1}&pageSize=${itemsPerPage.value}`, {
+    const response = await api.get(`https://app.trackswiftly.com/homelocations?page=${pageLocation.value - 1}&pageSize=${itemsPerPageLocation.value}`, {
       headers: {
         'Accept': '*/*',
       }
@@ -510,7 +563,8 @@ const getLocations = async() => {
 
 
     locations.value = response.data.content
-    totalLoactions.value = response.data.content.length
+    totalLocations.value = response.data.totalElements || 0;
+
 
     
 
@@ -812,23 +866,23 @@ const getGroup = async(id: number) => {
   }
 }
 
-const getVehicles = async () => {
+const getLocation = async (id: number) => {
   try {
-    const response = await api.get(`https://app.trackswiftly.com/vehicles?page=${page.value - 1}&pageSize=${itemsPerPage.value}`, {
+    const response = await api.get(`https://app.trackswiftly.com/homelocations/${id}`, {
       headers: {
         'Accept': '*/*',
       }
     });
 
-    
-    vehicles.value = response.data.content
-    totalVehicles.value = response.data.totalElements 
+    Location.value = response.data[0]
 
+    return Location.value;    
 
   } catch (error) {
-    console.error("Error fetching vehicles:", error.response?.data || error.message);
+    console.error("Error fetching group:", error.response?.data || error.message);
   }
-};
+}
+
 
 const deleteVehicle = async (id: number) => {
 
@@ -896,6 +950,36 @@ const updateOptions = (options: any) => {
   getVehicles()
 }
 
+const updateOptionsTypes = (options: any) => {
+  pageType.value = options.page
+  sortByType.value = options.sortBy[0]?.key
+  orderByType.value = options.sortBy[0]?.order
+  getTypes()
+}
+
+const updateOptionsModels = (options: any) => {
+  pageModel.value = options.page
+  sortByModel.value = options.sortBy[0]?.key
+  orderByModel.value = options.sortBy[0]?.order
+  getModels()
+}
+
+const updateOptionsGroups = (options: any) => {
+  pageGroup.value = options.page
+  sortByGroup.value = options.sortBy[0]?.key
+  orderByGroup.value = options.sortBy[0]?.order
+  getGroups()
+}
+
+const updateOptionsLocations = (options: any) => {
+  pageLocation.value = options.page
+  sortByLocation.value = options.sortBy[0]?.key
+  orderByLocation.value = options.sortBy[0]?.order
+  getLocations()
+}
+
+
+
 const openVehicleDrawer = async (id: number) => {
   console.log('Fetching vehicle:', id)
   await getVehicle(id)
@@ -917,6 +1001,15 @@ const updateVehicle = async () => {
 
   let vehicleData = {};
 
+
+  
+let formattedPurchaseDate = new Date(purchaseDateUpdate.value).toISOString().slice(0, -5) + "Z";
+
+  
+if (purchaseDateUpdate.value !== vehicle.value.purchaseDate) {
+  vehicleData.purchaseDate = formattedPurchaseDate;
+}
+
 // Only include changed values
 if (licensePlateUpdate.value !== vehicle.value.licensePlate) {
   vehicleData.licensePlate = licensePlateUpdate.value;
@@ -929,9 +1022,7 @@ if (vinUpdate.value !== vehicle.value.vin) {
 if (mileageUpdate.value !== vehicle.value.mileage) {
   vehicleData.mileage = mileageUpdate.value;
 }
-if (purchaseDateUpdate.value !== vehicle.value.purchaseDate) {
-  vehicleData.purchaseDate = purchaseDateUpdate.value;
-}
+
 if (typeUpdate.value !== vehicle.value.vehicleType.id) {
   vehicleData.vehicleType = typeUpdate.value;
 }
@@ -939,11 +1030,9 @@ if (modelUpdate.value !== vehicle.value.model.id) {
   vehicleData.model = modelUpdate.value;
 }
 if (groupUpdate.value !== vehicle.value.vhicleGroup.id) {
-  vehicleData.vhicleGroup = groupUpdate.value;
+  vehicleData.vhicleGroup = groupUpdate.value ?? 1;
+
 }
-
-
-console.log(vehicleData)
 
 // If no values have changed, exit the function
 if (Object.keys(vehicleData).length === 0) {
@@ -995,7 +1084,6 @@ const submitUpdateVehicle = async() => {
 const openAddVehicleDrawer = async () => {
 
   populateVehicleTMG();
-
   isAddVehicleDrawer.value = true 
 
 }
@@ -1238,6 +1326,14 @@ const submitUpdateGroup = async() => {
   } else {
     console.log("Form is not valid");
   }
+}
+
+
+const openLocationModal = async(id:number) => {
+  console.log('Fetching location id:', id)
+  await getLocation(id)
+  isEditLocationModal.value = true
+
 }
  
 </script>
@@ -1488,6 +1584,47 @@ const submitUpdateGroup = async() => {
           
         </VDialog>
 
+
+       <!-- 👉 Add new locaiton-->
+
+      <VDialog persistent v-model="isAddLocationModal"
+      max-width="600"
+      >
+
+      <DialogCloseBtn @click="isAddLocationModal = !isAddLocationModal" />
+
+          <!-- Dialog Content -->
+          <VCard title="Add Location">
+            <VCardText>
+              <VForm ref="refLocationForm" v-model="isAddLocationFormValid">
+                <VRow>
+                  <VCol cols="12">
+                    <AppTextField
+                      v-model="locationName"
+                      label="Name"
+                      placeholder="Name"
+                      :rules = "[requiredValidator, alphaValidator]"
+                    />
+                  </VCol>
+                </VRow>
+              </VForm>
+            </VCardText>
+
+            <VCardText class="d-flex justify-end flex-wrap gap-3">
+              <VBtn
+                variant="tonal"
+                color="secondary"
+                @click="isAddLocationModal = false"
+              >
+                Close
+              </VBtn>
+              <VBtn @click="submitAddVehicleType">
+                Submit
+              </VBtn>
+            </VCardText>
+          </VCard>
+        
+      </VDialog>
 
 
 
@@ -1828,7 +1965,6 @@ const submitUpdateGroup = async() => {
                     v-model="group"
                     label="Select Group"
                     placeholder="Select Group"
-                    :rules="[requiredValidator]"
                     :items="vehicleGroups"
                   />
                 </VCol>
@@ -1959,7 +2095,6 @@ const submitUpdateGroup = async() => {
                     v-model="groupUpdate"
                     label="Select Group"
                     placeholder="Select Group"
-                    :rules="[requiredValidator]"
                     :items="vehicleGroups"
                   />
                 </VCol>
@@ -2208,7 +2343,7 @@ const submitUpdateGroup = async() => {
           <VCardText class="d-flex flex-wrap py-4 gap-4">
           <div class="me-3 d-flex gap-3">
             <AppSelect
-              :model-value="itemsPerPage"
+              :model-value="itemsPerPageType"
               :items="[
                 { value: 10, title: '10' },
                 { value: 25, title: '25' },
@@ -2217,7 +2352,7 @@ const submitUpdateGroup = async() => {
                 { value: -1, title: 'All' },
               ]"
               style="inline-size: 6.25rem;"
-              @update:model-value="itemsPerPage = parseInt($event, 10)"
+              @update:model-value="itemsPerPageType = parseInt($event, 10)"
             />
           </div>
           <VSpacer />
@@ -2247,13 +2382,13 @@ const submitUpdateGroup = async() => {
 
         <!-- SECTION datatable -->
         <VDataTableServer
-          v-model:items-per-page="itemsPerPage"
-          v-model:page="page"
+          v-model:items-per-page="itemsPerPageType"
+          v-model:page="pageType"
           :items="types"
           :items-length="totalTypes"
           :headers="typeHeaders"
           class="text-no-wrap"
-          @update:options="updateOptions"
+          @update:options="updateOptionsTypes"
         >
           <!-- 👉 Type -->
           <template #item.name="{ item }">
@@ -2313,13 +2448,13 @@ const submitUpdateGroup = async() => {
             <VDivider />
             <div class="d-flex align-center justify-sm-space-between justify-center flex-wrap gap-3 pa-5 pt-3">
               <p class="text-sm text-disabled mb-0">
-                {{ paginationMeta({ page, itemsPerPage }, totalTypes) }}
+                {{ paginationMeta({ page: pageType, itemsPerPage: itemsPerPageType }, totalTypes) }}
               </p>
 
               <VPagination
-                v-model="page"
-                :length="Math.ceil(totalTypes / itemsPerPage)"
-                :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalTypes / itemsPerPage)"
+                v-model="pageType"
+                :length="Math.ceil(totalTypes / itemsPerPageType)"
+                :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalTypes / itemsPerPageType)"
               >
                 <template #prev="slotProps">
                   <VBtn
@@ -2355,7 +2490,7 @@ const submitUpdateGroup = async() => {
           <VCardText class="d-flex flex-wrap py-4 gap-4">
           <div class="me-3 d-flex gap-3">
             <AppSelect
-              :model-value="itemsPerPage"
+              :model-value="itemsPerPageModel"
               :items="[
                 { value: 10, title: '10' },
                 { value: 25, title: '25' },
@@ -2364,7 +2499,7 @@ const submitUpdateGroup = async() => {
                 { value: -1, title: 'All' },
               ]"
               style="inline-size: 6.25rem;"
-              @update:model-value="itemsPerPage = parseInt($event, 10)"
+              @update:model-value="itemsPerPageModel = parseInt($event, 10)"
             />
           </div>
           <VSpacer />
@@ -2393,13 +2528,13 @@ const submitUpdateGroup = async() => {
 
         <!-- SECTION datatable -->
         <VDataTableServer
-          v-model:items-per-page="itemsPerPage"
-          v-model:page="page"
+          v-model:items-per-page="itemsPerPageModel"
+          v-model:page="pageModel"
           :items="models"
           :items-length="totalModels"
           :headers="modelHeaders"
           class="text-no-wrap"
-          @update:options="updateOptions"
+          @update:options="updateOptionsModels"
         >
           <!-- 👉 Model -->
           <template #item.name="{ item }">
@@ -2488,13 +2623,13 @@ const submitUpdateGroup = async() => {
             <VDivider />
             <div class="d-flex align-center justify-sm-space-between justify-center flex-wrap gap-3 pa-5 pt-3">
               <p class="text-sm text-disabled mb-0">
-                {{ paginationMeta({ page, itemsPerPage }, totalModels) }}
+                {{ paginationMeta({ page: pageModel, itemsPerPage: itemsPerPageModel }, totalModels) }}
               </p>
 
               <VPagination
-                v-model="page"
-                :length="Math.ceil(totalModels / itemsPerPage)"
-                :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalModels / itemsPerPage)"
+                v-model="pageModel"
+                :length="Math.ceil(totalModels / itemsPerPageModel)"
+                :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalModels / itemsPerPageModel)"
               >
                 <template #prev="slotProps">
                   <VBtn
@@ -2531,7 +2666,7 @@ const submitUpdateGroup = async() => {
           <VCardText class="d-flex flex-wrap py-4 gap-4">
           <div class="me-3 d-flex gap-3">
             <AppSelect
-              :model-value="itemsPerPage"
+              :model-value="itemsPerPageGroup"
               :items="[
                 { value: 10, title: '10' },
                 { value: 25, title: '25' },
@@ -2540,7 +2675,7 @@ const submitUpdateGroup = async() => {
                 { value: -1, title: 'All' },
               ]"
               style="inline-size: 6.25rem;"
-              @update:model-value="itemsPerPage = parseInt($event, 10)"
+              @update:model-value="itemsPerPageGroup = parseInt($event, 10)"
             />
           </div>
           <VSpacer />
@@ -2570,13 +2705,13 @@ const submitUpdateGroup = async() => {
 
         <!-- SECTION datatable -->
         <VDataTableServer
-          v-model:items-per-page="itemsPerPage"
-          v-model:page="page"
+          v-model:items-per-page="itemsPerPageGroup"
+          v-model:page="pageGroup"
           :items="groups"
           :items-length="totalGroups"
           :headers="groupHeaders"
           class="text-no-wrap"
-          @update:options="updateOptions"
+          @update:options="updateOptionsGroups"
         >
           <!-- 👉 Vehicle -->
           <template #item.name="{ item }">
@@ -2607,11 +2742,11 @@ const submitUpdateGroup = async() => {
           </template>
 
 
-                  <!-- 👉 Mileage -->
-          <template #item.mileage="{ item }">
+            <!-- 👉 Description -->
+          <template #item.description="{ item }">
             <div class="d-flex align-center gap-4">
 
-              <span>{{ item.mileage }} km</span>
+              <span>{{ item.description }} km</span>
             </div>
           </template>
 
@@ -2637,13 +2772,13 @@ const submitUpdateGroup = async() => {
             <VDivider />
             <div class="d-flex align-center justify-sm-space-between justify-center flex-wrap gap-3 pa-5 pt-3">
               <p class="text-sm text-disabled mb-0">
-                {{ paginationMeta({ page, itemsPerPage }, totalGroups) }}
+                {{ paginationMeta({ page:pageGroup, itemsPerPage:itemsPerPageGroup }, totalGroups) }}
               </p>
 
               <VPagination
-                v-model="page"
-                :length="Math.ceil(totalGroups / itemsPerPage)"
-                :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalGroups / itemsPerPage)"
+                v-model="pageGroup"
+                :length="Math.ceil(totalGroups / itemsPerPageGroup)"
+                :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalGroups / itemsPerPageGroup)"
               >
                 <template #prev="slotProps">
                   <VBtn
@@ -2680,7 +2815,7 @@ const submitUpdateGroup = async() => {
           <VCardText class="d-flex flex-wrap py-4 gap-4">
           <div class="me-3 d-flex gap-3">
             <AppSelect
-              :model-value="itemsPerPage"
+              :model-value="itemsPerPageLocation"
               :items="[
                 { value: 10, title: '10' },
                 { value: 25, title: '25' },
@@ -2689,7 +2824,7 @@ const submitUpdateGroup = async() => {
                 { value: -1, title: 'All' },
               ]"
               style="inline-size: 6.25rem;"
-              @update:model-value="itemsPerPage = parseInt($event, 10)"
+              @update:model-value="itemsPerPageLocation = parseInt($event, 10)"
             />
           </div>
           <VSpacer />
@@ -2705,12 +2840,12 @@ const submitUpdateGroup = async() => {
             </div>
           </div>
 
-          <!-- 👉 Add Vehicle button -->
+          <!-- 👉 Add Location button -->
           <VBtn
             prepend-icon="tabler-category-plus"
-            @click="isAddGroupModal = true"
+            @click="isAddLocationModal = true"
           >
-          Add Group
+          Add Location
         </VBtn>
 
         </VCardText>
@@ -2719,15 +2854,15 @@ const submitUpdateGroup = async() => {
 
         <!-- SECTION datatable -->
         <VDataTableServer
-          v-model:items-per-page="itemsPerPage"
-          v-model:page="page"
-          :items="groups"
-          :items-length="totalGroups"
-          :headers="groupHeaders"
+          v-model:items-per-page="itemsPerPageLocation"
+          v-model:page="pageLocation"
+          :items="locations"
+          :items-length="totalLocations"
+          :headers="locationHeaders"
           class="text-no-wrap"
-          @update:options="updateOptions"
+          @update:options="updateOptionsLocations"
         >
-          <!-- 👉 Vehicle -->
+          <!-- 👉 Location -->
           <template #item.name="{ item }">
             <div class="d-flex align-center">
               <VAvatar
@@ -2756,11 +2891,20 @@ const submitUpdateGroup = async() => {
           </template>
 
 
-                  <!-- 👉 Mileage -->
-          <template #item.mileage="{ item }">
+          <!-- 👉 latitude -->
+          <template #item.lon="{ item }">
             <div class="d-flex align-center gap-4">
 
-              <span>{{ item.mileage }} km</span>
+              <span>{{ item.latitude }}</span>
+            </div>
+          </template>
+
+
+          <!-- 👉 longtitude -->
+          <template #item.lat="{ item }">
+            <div class="d-flex align-center gap-4">
+
+              <span>{{ item.longitude }}</span>
             </div>
           </template>
 
@@ -2770,7 +2914,7 @@ const submitUpdateGroup = async() => {
           <template #item.actions="{ item }">
 
           <!-- edit user role -->
-          <IconBtn @click="openVehicleDrawer(item.id)">
+          <IconBtn @click="openLocationModal(item.id)">
             <VIcon icon="tabler-edit" />
           </IconBtn>
 
@@ -2786,13 +2930,13 @@ const submitUpdateGroup = async() => {
             <VDivider />
             <div class="d-flex align-center justify-sm-space-between justify-center flex-wrap gap-3 pa-5 pt-3">
               <p class="text-sm text-disabled mb-0">
-                {{ paginationMeta({ page, itemsPerPage }, totalGroups) }}
+                {{ paginationMeta({ page: pageLocation, itemsPerPage: itemsPerPageLocation }, totalLocations) }}
               </p>
 
               <VPagination
-                v-model="page"
-                :length="Math.ceil(totalGroups / itemsPerPage)"
-                :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalGroups / itemsPerPage)"
+                v-model="pageLocation"
+                :length="Math.max(1, Math.ceil(totalLocations / itemsPerPageLocation))"
+                :total-visible="$vuetify.display.xs ? 1 : Math.ceil(totalLocations / itemsPerPageLocation)"
               >
                 <template #prev="slotProps">
                   <VBtn
