@@ -4,6 +4,7 @@ import Swal from 'sweetalert2'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
 import { VForm } from 'vuetify/components/VForm'
 import { VDataTableServer } from 'vuetify/labs/VDataTable'
+import mapboxgl from 'mapbox-gl'
 
 import api from '@/utils/axios'
 
@@ -211,6 +212,8 @@ const pageLocation = ref(1)
 const sortByLocation = ref()
 const orderByLocation = ref()
 
+
+const map = ref(null);
 
 
 
@@ -1335,6 +1338,32 @@ const openLocationModal = async(id:number) => {
   isEditLocationModal.value = true
 
 }
+
+const initMap = () => {
+  if (map.value) return; // Prevent reinitialization
+
+mapboxgl.accessToken = 'pk.eyJ1Ijoic2FhZG92c2t5IiwiYSI6ImNsZ3VxeDJ0bTBvMDYzZm81cWd2YWpkNTEifQ.rT0oeL7LOwbvkPYCFSVFWQ'
+
+map.value = new mapboxgl.Map({
+  container: 'mapContainer',
+  style: 'mapbox://styles/mapbox/streets-v11',
+  center: [0, 0], // Default center (longitude, latitude)
+  zoom: 8,
+})
+
+new mapboxgl.Marker()
+  .setLngLat([0, 0]) // Default marker position
+  .addTo(map.value)
+
+}
+
+const openAddLocaitonModal = () => {
+  isAddLocationModal.value = true
+
+  nextTick(() => {
+    initMap();
+      });
+}
  
 </script>
 
@@ -1598,13 +1627,16 @@ const openLocationModal = async(id:number) => {
             <VCardText>
               <VForm ref="refLocationForm" v-model="isAddLocationFormValid">
                 <VRow>
-                  <VCol cols="12">
+                  <VCol cols="12" md="6">
                     <AppTextField
                       v-model="locationName"
                       label="Name"
                       placeholder="Name"
                       :rules = "[requiredValidator, alphaValidator]"
                     />
+                  </VCol>
+                  <VCol cols="12" md="6">
+                    <div id="mapContainer" style="height: 300px; border-radius: 8px;"></div>
                   </VCol>
                 </VRow>
               </VForm>
@@ -1618,7 +1650,7 @@ const openLocationModal = async(id:number) => {
               >
                 Close
               </VBtn>
-              <VBtn @click="submitAddVehicleType">
+              <VBtn @click="">
                 Submit
               </VBtn>
             </VCardText>
@@ -2843,7 +2875,7 @@ const openLocationModal = async(id:number) => {
           <!-- 👉 Add Location button -->
           <VBtn
             prepend-icon="tabler-category-plus"
-            @click="isAddLocationModal = true"
+            @click="openAddLocaitonModal"
           >
           Add Location
         </VBtn>
@@ -2981,5 +3013,10 @@ const openLocationModal = async(id:number) => {
   border: 1px solid #ccc;
   border-radius: 8px;
   padding: 5px;
+}
+
+#mapContainer {
+  width: 100%;
+  height: 300px;
 }
 </style>
