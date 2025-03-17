@@ -86,9 +86,10 @@ const onSubmit = async () => {
   const result = await refVForm.value?.validate();
 
   if (result?.valid) {
-    // await loginWithKeycloakNewWindow();
-    loginWithKeycloakOld()
+    await loginWithKeycloakNewWindow();
+    // loginWithKeycloakOld()
     login()
+
   }
 };
 

@@ -16,7 +16,13 @@ export const setupGuards = (router: Router) => {
      * Check if user is logged in by checking if token & user data exists in local storage
      * Feel free to update this logic to suit your needs
      */
+
+    //vue template accesstoken check
     const isLoggedIn = !!(useCookie('userData').value && useCookie('accessToken').value)
+
+    //keycloak accesstoken check
+    // const isLoggedIn = !!(localStorage.getItem('access_token'))
+
 
     /*
       If user is logged in and is trying to access login like page, redirect to home

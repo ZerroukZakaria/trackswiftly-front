@@ -23,6 +23,8 @@ keycloak.init({
     storeTokens();
     
     console.log('User is authenticated');
+    console.log(localStorage.getItem('access_token'));
+
     refreshTokenIfNeeded(); 
     
   } else {
