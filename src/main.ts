@@ -12,15 +12,6 @@ import '@styles/styles.scss'
 // Create Vue app
 const app = createApp(App)
 
-
-const router = createRouter({
-  history: createWebHistory(),
-  routes: [
-    // Define your routes here
-  ],
-})
-
-
 // Register plugins
 registerPlugins(app)
 
@@ -33,17 +24,10 @@ keycloak.init({
   if (authenticated) {
     storeTokens();
     console.log('User is authenticated');
-    refreshTokenIfNeeded(); 
 
-    await nextTick(() => {
-      const currentRoute = router.currentRoute.value;
-      const redirectTo = currentRoute.query.to ? String(currentRoute.query.to) : '/';
-      
-      // Now navigate using router.replace
-      router.replace(redirectTo).catch((error) => {
-        console.error('Redirect failed:', error);
-      });
-    });
+    
+
+    refreshTokenIfNeeded(); 
     
   } else {
     console.log('User is not authenticated');

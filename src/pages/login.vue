@@ -43,49 +43,16 @@ const credentials = ref({
   password: 'admin',
 })
 
-
 const isHidden = ref(true) // Set to `true` to hide, `false` to show
 
-const rememberMe = ref(false)
 
-const login = async () => {
-  try {
-    const res = await $api('/auth/login', {
-      method: 'POST',
-      body: {
-        email: credentials.value.email,
-        password: credentials.value.password,
-      },
-      onResponseError({ response }) {
-        errors.value = response._data.errors
-      },
-    })
-
-
-    const { accessToken, userData } = res
-
-
-    useCookie('userData').value = userData
-    useCookie('accessToken').value = accessToken
-
-    // Redirect to `to` query if exist or redirect to index route
-    // ❗ nextTick is required to wait for DOM updates and later redirect
-    await nextTick(() => {
-      router.replace(route.query.to ? String(route.query.to) : '/')
-    })
-  }
-  catch (err) {
-    console.error(err)
-  }
-}
 
 const onSubmit = async () => {
   const result = await refVForm.value?.validate();
 
   if (result?.valid) {
-    await loginWithKeycloakNewWindow();
-    // loginWithKeycloakOld()
-    // login()
+    await loginWithIframe();
+
 
   }
 };
@@ -109,7 +76,7 @@ const loginWithKeycloakOld = async () => {
 
 
 
-const loginWithKeycloakNewWindow = async () => {
+const loginWithIframe = async () => {
   
   try {
     // Generate the login URL manually
@@ -128,6 +95,28 @@ const loginWithKeycloakNewWindow = async () => {
       return;
     }
 
+
+        // Listen for messages from the popup
+        const messageListener = async (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return; // Security check
+
+      if (event.data === 'keycloak-authenticated') {
+        console.log('User authenticated! Refreshing token...');
+
+        // Refresh Keycloak session
+        await keycloak.updateToken(30); // Refresh token with a 30s buffer
+        storeTokens();
+        
+        // Redirect the user after successful login
+        router.replace(route.query.to ? String(route.query.to) : '/');
+      }
+    };
+
+    window.addEventListener('message', messageListener);
+
+
+
+
     // await nextTick(() => {
     //   router.replace(route.query.to ? String(route.query.to) : '/')
     // })
@@ -136,6 +125,7 @@ const loginWithKeycloakNewWindow = async () => {
     const checkInterval = setInterval(async () => {
       if (loginWindow.closed) {
         clearInterval(checkInterval);
+        window.removeEventListener('message', messageListener);
         console.log('Login window closed. Checking authentication...');
 
       }
