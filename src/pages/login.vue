@@ -30,7 +30,6 @@ const isPasswordVisible = ref(false)
 const route = useRoute()
 const router = useRouter()
 
-const ability = useAbility()
 
 const errors = ref<Record<string, string | undefined>>({
   email: undefined,
@@ -63,10 +62,8 @@ const login = async () => {
     })
 
 
-    const { accessToken, userData, userAbilityRules } = res
+    const { accessToken, userData } = res
 
-    useCookie('userAbilityRules').value = userAbilityRules
-    ability.update(userAbilityRules)
 
     useCookie('userData').value = userData
     useCookie('accessToken').value = accessToken
@@ -88,7 +85,7 @@ const onSubmit = async () => {
   if (result?.valid) {
     await loginWithKeycloakNewWindow();
     // loginWithKeycloakOld()
-    login()
+    // login()
 
   }
 };
@@ -130,6 +127,10 @@ const loginWithKeycloakNewWindow = async () => {
       console.error('Failed to open login window. Please allow pop-ups.');
       return;
     }
+
+    // await nextTick(() => {
+    //   router.replace(route.query.to ? String(route.query.to) : '/')
+    // })
 
     // Poll to check if the login window was closed
     const checkInterval = setInterval(async () => {

@@ -1,33 +1,41 @@
 <script setup lang="ts">
+import { keycloak, removeTokens } from '@/services/keycloak'
 import { PerfectScrollbar } from 'vue3-perfect-scrollbar'
-import {keycloak, removeTokens} from '@/services/keycloak'
 
 
 
 const router = useRouter()
-const ability = useAbility()
 
-// TODO: Get type from backend
-const userData = useCookie<any>('userData')
+const user = ref<any>(null)
+
+// Function to fetch user data (simulating a backend call)
+const fetchUserData = async () => {
+  // Simulate API call to get user data (you can replace this with an actual API call)
+  // Example: user.value = await fetchUserDataFromAPI()
+
+  // Hardcoded data for example purposes
+  user.value = {
+    fullName: 'John Doe',
+    username: 'johndoe',
+    role: 'Admin',
+    avatar: 'https://example.com/avatar.jpg',
+  }
+}
+
+// Fetch user data when component is mounted
+fetchUserData()
+
 
 const logout = async () => {
 
   logoutFromKeycloak()
   // Remove "accessToken" from cookie
-  useCookie('accessToken').value = null
-
-  // Remove "userData" from cookie
-  userData.value = null
+  // useCookie('accessToken').value = null
 
   // Redirect to login page
   await router.push('/login')
 
-  // ℹ️ We had to remove abilities in then block because if we don't nav menu items mutation is visible while redirecting user to login page
-  // Remove "userAbilities" from cookie
-  useCookie('userAbilityRules').value = null
 
-  // Reset ability to initial ability
-  ability.update([])
 }
 
 const logoutFromKeycloak = async () => {
@@ -60,7 +68,7 @@ const userProfileList = [
 
 <template>
   <VBadge
-    v-if="userData"
+    v-if="user"
     dot
     bordered
     location="bottom right"
@@ -70,12 +78,12 @@ const userProfileList = [
   >
     <VAvatar
       class="cursor-pointer"
-      :color="!(userData && userData.avatar) ? 'primary' : undefined"
-      :variant="!(userData && userData.avatar) ? 'tonal' : undefined"
+      :color="!(user && user.avatar) ? 'primary' : undefined"
+      :variant="!(user && user.avatar) ? 'tonal' : undefined"
     >
       <VImg
-        v-if="userData && userData.avatar"
-        :src="userData.avatar"
+        v-if="user && user.avatar"
+        :src="user.avatar"
       />
       <VIcon
         v-else
@@ -102,12 +110,12 @@ const userProfileList = [
                   bordered
                 >
                   <VAvatar
-                    :color="!(userData && userData.avatar) ? 'primary' : undefined"
-                    :variant="!(userData && userData.avatar) ? 'tonal' : undefined"
+                    :color="!(user && user.avatar) ? 'primary' : undefined"
+                    :variant="!(user && user.avatar) ? 'tonal' : undefined"
                   >
                     <VImg
-                      v-if="userData && userData.avatar"
-                      :src="userData.avatar"
+                      v-if="user && user.avatar"
+                      :src="user.avatar"
                     />
                     <VIcon
                       v-else
@@ -119,9 +127,9 @@ const userProfileList = [
             </template>
 
             <VListItemTitle class="font-weight-medium">
-              {{ userData.fullName || userData.username }}
+              {{ user.fullName || user.username }}
             </VListItemTitle>
-            <VListItemSubtitle>{{ userData.role }}</VListItemSubtitle>
+            <VListItemSubtitle>{{ user.role }}</VListItemSubtitle>
           </VListItem>
 
           <PerfectScrollbar :options="{ wheelPropagation: false }">
