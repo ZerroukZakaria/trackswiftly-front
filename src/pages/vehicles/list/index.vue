@@ -1339,31 +1339,49 @@ const openLocationModal = async(id:number) => {
 
 }
 
+let currentMarker = null; // Holds the reference to the current marker
+let mapInstance = null; // Holds the map instance to check if it's already initialized
+
 const initMap = () => {
-  if (map.value) return; // Prevent reinitialization
+  // Check if the map already exists and remove it before reinitializing
+  if (mapInstance) {
+    mapInstance.remove(); // Destroy the existing map instance
+  }
 
-mapboxgl.accessToken = 'pk.eyJ1Ijoic2FhZG92c2t5IiwiYSI6ImNsZ3VxeDJ0bTBvMDYzZm81cWd2YWpkNTEifQ.rT0oeL7LOwbvkPYCFSVFWQ'
+  mapboxgl.accessToken = 'pk.eyJ1Ijoic2FhZG92c2t5IiwiYSI6ImNsZ3VxeDJ0bTBvMDYzZm81cWd2YWpkNTEifQ.rT0oeL7LOwbvkPYCFSVFWQ';
 
-map.value = new mapboxgl.Map({
-  container: 'mapContainer',
-  style: 'mapbox://styles/mapbox/streets-v11',
-  center: [0, 0], // Default center (longitude, latitude)
-  zoom: 8,
-})
+  mapInstance = new mapboxgl.Map({
+    container: 'mapContainer',
+    style: 'mapbox://styles/mapbox/streets-v11',
+    center: [-6.8498, 33.9716], // Morocco's coordinates (Rabat)
+    zoom: 5, // Adjust zoom level as needed
+  });
 
-new mapboxgl.Marker()
-  .setLngLat([0, 0]) // Default marker position
-  .addTo(map.value)
+  // Add click event to get lat/lng and place a marker
+  mapInstance.on('click', (event) => {
+    const { lng, lat } = event.lngLat;
+    console.log('Clicked coordinates:', lng, lat);
 
-}
+    // If a marker already exists, remove it
+    if (currentMarker) {
+      currentMarker.remove();
+    }
+
+    // Create a new marker and set its position at the clicked coordinates
+    currentMarker = new mapboxgl.Marker()
+      .setLngLat([lng, lat])
+      .addTo(mapInstance);
+  });
+};
 
 const openAddLocaitonModal = () => {
-  isAddLocationModal.value = true
+  isAddLocationModal.value = true;
 
   nextTick(() => {
     initMap();
-      });
-}
+  });
+};
+
  
 </script>
 
@@ -1614,28 +1632,27 @@ const openAddLocaitonModal = () => {
         </VDialog>
 
 
-       <!-- 👉 Add new locaiton-->
-
-      <VDialog persistent v-model="isAddLocationModal"
-      max-width="600"
-      >
-
-      <DialogCloseBtn @click="isAddLocationModal = !isAddLocationModal" />
+        <!-- 👉 Add new location -->
+        <VDialog persistent v-model="isAddLocationModal" max-width="600">
+          <DialogCloseBtn @click="isAddLocationModal = !isAddLocationModal" />
 
           <!-- Dialog Content -->
           <VCard title="Add Location">
             <VCardText>
               <VForm ref="refLocationForm" v-model="isAddLocationFormValid">
                 <VRow>
-                  <VCol cols="12" md="6">
+                  <!-- Name input -->
+                  <VCol cols="12" md="12">
                     <AppTextField
                       v-model="locationName"
                       label="Name"
                       placeholder="Name"
-                      :rules = "[requiredValidator, alphaValidator]"
+                      :rules="[requiredValidator, alphaValidator]"
                     />
                   </VCol>
-                  <VCol cols="12" md="6">
+
+                  <!-- Map below the name input -->
+                  <VCol cols="12">
                     <div id="mapContainer" style="height: 300px; border-radius: 8px;"></div>
                   </VCol>
                 </VRow>
@@ -1643,11 +1660,7 @@ const openAddLocaitonModal = () => {
             </VCardText>
 
             <VCardText class="d-flex justify-end flex-wrap gap-3">
-              <VBtn
-                variant="tonal"
-                color="secondary"
-                @click="isAddLocationModal = false"
-              >
+              <VBtn variant="tonal" color="secondary" @click="isAddLocationModal = false">
                 Close
               </VBtn>
               <VBtn @click="">
@@ -1655,8 +1668,8 @@ const openAddLocaitonModal = () => {
               </VBtn>
             </VCardText>
           </VCard>
-        
-      </VDialog>
+        </VDialog>
+
 
 
 
