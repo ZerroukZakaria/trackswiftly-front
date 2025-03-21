@@ -105,8 +105,8 @@ const totalLocations = ref(0)
 const isAddLocationFormValid = ref(false)
 const refLocationForm = ref<VForm>();
 const locationName = ref('')
-const locationLat = ref('')
-const locationLong = ref('')
+const locationLat = ref(0)
+const locationLong = ref(0)
 
 
 //Add Type refs
@@ -213,18 +213,6 @@ const sortByLocation = ref()
 const orderByLocation = ref()
 
 
-const map = ref(null);
-
-
-
-
-onMounted(() => {
-  getVehicles();
-  getTypes();
-  getModels();
-  getGroups();
-  getLocations();
-})
 
 
 const populateVehicleTMG = async() => {
@@ -293,6 +281,18 @@ const submitAddVehicleModel = async() => {
   } else {
     console.log("Form is not valid");
   }
+}
+
+const submitAddVehicleLocation = async() => {
+  const { valid } = await refLocationForm.value?.validate();
+
+if (valid) {
+  await addVehicleLocation();
+  getLocations();
+
+} else {
+  console.log("Form is not valid");
+}
 }
 
 const saveVehicle = async () => {
@@ -463,7 +463,7 @@ const addVehicleGroup = async () => {
   Swal.fire({
       icon: "success",
       title: "Success!",
-      text: `Type added successfully.`,
+      text: `Group added successfully.`,
       didOpen: () => {
       document.querySelector('.swal2-confirm').style.color = 'white';
     }
@@ -480,6 +480,50 @@ const addVehicleGroup = async () => {
   }
   
 
+}
+
+const addVehicleLocation = async() => {
+  try {
+    let locationData = {
+    name: locationName.value,
+    latitude: locationLat.value,
+    longitude: locationLong.value
+
+   };
+
+
+   if (locationLat.value == 0 && locationLong.value == 0) {
+    console.log("Form is not valid");
+    return;
+   }
+  
+  const response = await api.post('https://app.trackswiftly.com/homelocations', [locationData], {
+      headers: {
+        'Accept': '*/*',
+        'Content-Type': 'application/json'
+      }
+    });
+
+
+  Swal.fire({
+      icon: "success",
+      title: "Success!",
+      text: `Location added successfully.`,
+      didOpen: () => {
+      document.querySelector('.swal2-confirm').style.color = 'white';
+    }
+    });
+
+    
+    isAddLocationModal.value = false
+    locationName.value = '';
+    locationLat.value = 0;
+    locationLong.value = 0;
+
+  } catch (error) {
+    console.error('Error saving location:', error.response?.data || error.message);
+
+  }
 }
 
 const getVehicles = async () => {
@@ -499,7 +543,6 @@ const getVehicles = async () => {
     console.error("Error fetching vehicles:", error.response?.data || error.message);
   }
 };
-
 
 const getModels = async () => {
   try {
@@ -982,7 +1025,6 @@ const updateOptionsLocations = (options: any) => {
 }
 
 
-
 const openVehicleDrawer = async (id: number) => {
   console.log('Fetching vehicle:', id)
   await getVehicle(id)
@@ -1090,7 +1132,6 @@ const openAddVehicleDrawer = async () => {
   isAddVehicleDrawer.value = true 
 
 }
-
 
 const openTypeModal = async (id: number) => {
   console.log('Fetching type:', id)
@@ -1331,6 +1372,12 @@ const submitUpdateGroup = async() => {
   }
 }
 
+const hideAttributionControl = () => {
+  const attributionControl = document.querySelector('.mapboxgl-ctrl-attrib');
+  if (attributionControl) {
+    attributionControl.style.display = 'none';
+  }
+};
 
 const openLocationModal = async(id:number) => {
   console.log('Fetching location id:', id)
@@ -1357,9 +1404,18 @@ const initMap = () => {
     zoom: 5, // Adjust zoom level as needed
   });
 
+
+  mapInstance.on('load', () => {
+    hideAttributionControl();
+  });
+
   // Add click event to get lat/lng and place a marker
   mapInstance.on('click', (event) => {
     const { lng, lat } = event.lngLat;
+
+    locationLong.value = lng;
+    locationLat.value = lat;
+
     console.log('Clicked coordinates:', lng, lat);
 
     // If a marker already exists, remove it
@@ -1381,6 +1437,14 @@ const openAddLocaitonModal = () => {
     initMap();
   });
 };
+
+onMounted(() => {
+  getVehicles();
+  getTypes();
+  getModels();
+  getGroups();
+  getLocations();
+})
 
  
 </script>
@@ -1647,11 +1711,10 @@ const openAddLocaitonModal = () => {
                       v-model="locationName"
                       label="Name"
                       placeholder="Name"
-                      :rules="[requiredValidator, alphaValidator]"
+                      :rules="[requiredValidator]"
                     />
                   </VCol>
 
-                  <!-- Map below the name input -->
                   <VCol cols="12">
                     <div id="mapContainer" style="height: 300px; border-radius: 8px;"></div>
                   </VCol>
@@ -1663,7 +1726,7 @@ const openAddLocaitonModal = () => {
               <VBtn variant="tonal" color="secondary" @click="isAddLocationModal = false">
                 Close
               </VBtn>
-              <VBtn @click="">
+              <VBtn @click="submitAddVehicleLocation">
                 Submit
               </VBtn>
             </VCardText>
@@ -3029,7 +3092,11 @@ const openAddLocaitonModal = () => {
 }
 
 #mapContainer {
-  width: 100%;
   height: 300px;
+  width: 100%;
+  border-radius: 8px;
+  position: relative; /* Ensure the container has proper positioning */
 }
+
+
 </style>
