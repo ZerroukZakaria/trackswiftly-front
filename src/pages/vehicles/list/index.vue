@@ -1401,23 +1401,31 @@ const initMap = () => {
   mapInstance = new mapboxgl.Map({
     container: 'mapContainer',
     style: 'mapbox://styles/mapbox/dark-v10',
-    // style: 'mapbox://styles/mapbox/satellite-v9', 
-    // Alternatively, try one of these:
-    // style: 'mapbox://styles/mapbox/light-v10',
-    // style: 'mapbox://styles/mapbox/outdoors-v11',
-    // style: 'mapbox://styles/mapbox/streets-v11',
-    center: [-6.8498, 33.9716], // Morocco's coordinates (Rabat)
-    zoom: 5, // Adjust zoom level as needed
-    renderWorldCopies: false // This can help with coordinate issues
-
+    center: [-6.8498, 33.9716], 
+    zoom: 5, 
+    renderWorldCopies: false 
   });
-
 
   mapInstance.on('load', () => {
     hideAttributionControl();
     mapInstance.resize();
-
   });
+
+
+  mapInstance.on("style.load", function () {
+    function applyWorldviewFilters() {
+        const WORLD_VIEW = "MA";
+        var adminLayers = ["admin-0-boundary", "admin-1-boundary", "admin-0-boundary-disputed", "admin-1-boundary-bg", "admin-0-boundary-bg", "country-label"];
+        adminLayers.forEach((adminLayer) => {
+            if (mapInstance.getLayer(adminLayer)) {
+                mapInstance.setFilter(adminLayer, ["match", ["get", "worldview"], ["all", WORLD_VIEW], true, false]);
+            }
+        });
+    }
+
+    applyWorldviewFilters();
+  });
+
 
   // Add click event to get lat/lng and place a marker
   mapInstance.on('click', (event) => {
@@ -1435,7 +1443,7 @@ const initMap = () => {
 
     // Create a new marker and set its position at the clicked coordinates
     currentMarker = new mapboxgl.Marker({
-        color: "#FF0000",  // Optional: make it more visible
+        color: "#ff001f",  // Optional: make it more visible
         draggable: false   // Optional: prevent accidental movement
       })
       .setLngLat(coordinates)
