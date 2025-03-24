@@ -142,6 +142,16 @@ const modelMaxPayloadWeightUpdate = ref('')
 const modelMaxVolumeUpdate = ref('')
 
 
+//Edit location refs
+
+const isUpdateLocationFormValid = ref(false)
+const refLocationUpdateForm = ref<VForm>()
+const locationNameUpdate = ref('')
+const locationUpdateLat = ref(0)
+const locationUpdateLong = ref(0)
+
+
+
 
 //Add Model refs
 const isAddModelFormValid = ref(false)
@@ -1317,7 +1327,6 @@ const openGroupModal = async (id: number) => {
 const updateGroup = async () => {
   let groupData = {};
 
-  // Only include changed values
   if (groupNameUpdate.value !== Group.value.name) {
     groupData.name = groupNameUpdate.value;
   }
@@ -1326,13 +1335,11 @@ const updateGroup = async () => {
     groupData.description = groupDescriptionUpdate.value;
   }
 
-  // If no values have changed, exit the function
   if (Object.keys(groupData).length === 0) {
     isEditGroupModal.value = false;
     return;
   }
 
-  console.log(groupData)
 
   try {
     const response = await api.put(
@@ -1383,14 +1390,87 @@ const hideAttributionControl = () => {
 const openLocationModal = async(id:number) => {
   console.log('Fetching location id:', id)
   await getLocation(id)
+  locationNameUpdate.value = Location.value.name
+  locationUpdateLat.value = Location.value.latitude
+  locationUpdateLong.value = Location.value.longitude
+  
   isEditLocationModal.value = true
+  nextTick(() => {
+    initMapUpdate( locationUpdateLong.value, locationUpdateLat.value);
+  });
+  
+}
+
+const updateLocation = async() => {
+  let locationData = {};
+
+
+
+  if (locationNameUpdate.value !== Location.value.name) {
+    locationData.name = locationNameUpdate.value;
+  }
+  if (locationUpdateLat.value !== Location.value.latitude) {
+    locationData.latitude = locationUpdateLat.value;
+  }
+  if (locationUpdateLong.value !== Location.value.longitude) {
+    locationData.longitude = locationUpdateLong.value;
+  }
+
+  if (Object.keys(locationData).length === 0) {
+    isEditLocationModal.value = false;
+    return;
+  }
+
+  console.log(locationData);
+
+  try {
+    const response = await api.put(
+      `https://app.trackswiftly.com/homelocations/${Location.value.id}`,
+      locationData,
+      {
+        headers: {
+          "Accept": "*/*",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    Swal.fire({
+      icon: "success",
+      title: "Success!",
+      text: "Location updated successfully.",
+      didOpen: () => {
+        document.querySelector(".swal2-confirm").style.color = "white";
+      },
+    });
+
+    isEditLocationModal.value = false;
+  } catch (error) {
+    console.error("Error updating type:", error.response?.data || error.message);
+  }
+  
 
 }
 
-let currentMarker = null; // Holds the reference to the current marker
-let mapInstance = null; // Holds the map instance to check if it's already initialized
+const submitUpdateLocation = async() => {
+  const { valid } = await refLocationUpdateForm.value?.validate();
+  if (valid) {
+    await updateLocation();
+    getLocations();
+    
+  } else {
+    console.log("Form is not valid");
+  }
+}
 
-const initMap = () => {
+
+
+let currentMarker: mapboxgl.Marker | null = null; 
+let mapInstance: mapboxgl.Map | null = null; // Initialize as null
+
+let mapInstanceUpdate: mapboxgl.Map | null = null;
+
+const initMap = (mapContainer: string) => {
   // Check if the map already exists and remove it before reinitializing
   if (mapInstance) {
     mapInstance.remove(); // Destroy the existing map instance
@@ -1399,7 +1479,7 @@ const initMap = () => {
   mapboxgl.accessToken = 'pk.eyJ1Ijoic2FhZG92c2t5IiwiYSI6ImNsZ3VxeDJ0bTBvMDYzZm81cWd2YWpkNTEifQ.rT0oeL7LOwbvkPYCFSVFWQ';
 
   mapInstance = new mapboxgl.Map({
-    container: 'mapContainer',
+    container: mapContainer,
     style: 'mapbox://styles/mapbox/dark-v10',
     center: [-6.8498, 33.9716], 
     zoom: 5, 
@@ -1451,11 +1531,92 @@ const initMap = () => {
   });
 };
 
+const initMapUpdate = (lat: number, long: number) => {
+
+    if (mapInstanceUpdate) {
+    mapInstanceUpdate.remove(); 
+  }
+
+  mapboxgl.accessToken = 'pk.eyJ1Ijoic2FhZG92c2t5IiwiYSI6ImNsZ3VxeDJ0bTBvMDYzZm81cWd2YWpkNTEifQ.rT0oeL7LOwbvkPYCFSVFWQ';
+
+  mapInstanceUpdate = new mapboxgl.Map({
+    container: 'mapContainerUpdate',
+    style: 'mapbox://styles/mapbox/dark-v10',
+    center: [lat, long], 
+    zoom: 5, 
+    renderWorldCopies: false 
+  });
+
+  mapInstanceUpdate.on('load', () => {
+    hideAttributionControl();
+    mapInstanceUpdate.resize();
+
+
+    currentMarker = new mapboxgl.Marker({
+            color: "#ff001f",  // Optional: make it more visible
+            draggable: true    // Make the marker draggable
+        })
+        .setLngLat([lat, long])  // Set the initial position using the provided lat/lon
+        .addTo(mapInstanceUpdate);
+
+
+        mapInstanceUpdate.flyTo({
+            center: [lat, long],   // Center the map at the marker
+            zoom: 12,              // Set the zoom level (you can change this value)
+            essential: true        // Ensures the animation is performed
+        });
+
+  });
+
+
+  mapInstanceUpdate.on("style.load", function () {
+    function applyWorldviewFilters() {
+        const WORLD_VIEW = "MA";
+        var adminLayers = ["admin-0-boundary", "admin-1-boundary", "admin-0-boundary-disputed", "admin-1-boundary-bg", "admin-0-boundary-bg", "country-label"];
+        adminLayers.forEach((adminLayer) => {
+            if (mapInstanceUpdate.getLayer(adminLayer)) {
+                mapInstanceUpdate.setFilter(adminLayer, ["match", ["get", "worldview"], ["all", WORLD_VIEW], true, false]);
+            }
+        });
+    }
+
+    applyWorldviewFilters();
+  });
+
+
+
+
+
+  // Add click event to get lat/lng and place a marker
+  mapInstanceUpdate.on('click', (event) => {
+
+    const coordinates = event.lngLat;
+    locationUpdateLong.value = coordinates.lng;
+    locationUpdateLat.value = coordinates.lat;
+
+    console.log('Clicked coordinates:', coordinates.lng, coordinates.lat);
+
+    // If a marker already exists, remove it
+    if (currentMarker) {
+      currentMarker.remove();
+    }
+
+    // Create a new marker and set its position at the clicked coordinates
+    currentMarker = new mapboxgl.Marker({
+        color: "#ff001f",  // Optional: make it more visible
+        draggable: false   // Optional: prevent accidental movement
+      })
+      .setLngLat(coordinates)
+      .addTo(mapInstanceUpdate);
+  });
+}
+
+
 const openAddLocaitonModal = () => {
   isAddLocationModal.value = true;
 
   nextTick(() => {
-    initMap();
+    initMap('mapContainer');
 
   });
 };
@@ -1466,6 +1627,7 @@ onMounted(() => {
   getModels();
   getGroups();
   getLocations();
+
 })
 
  
@@ -1710,6 +1872,53 @@ onMounted(() => {
                   Close
                 </VBtn>
                 <VBtn @click="submitUpdateModel">
+                  Update
+                </VBtn>
+              </VCardText>
+            </VCard>
+          
+        </VDialog>
+
+
+        <!-- 👉 Edit location-->
+
+        
+        <VDialog persistent  v-model="isEditLocationModal"
+        max-width="600"
+        >
+
+        <DialogCloseBtn @click="isEditLocationModal = !isEditLocationModal" />
+
+            <!-- Dialog Content -->
+            <VCard title="Update Location">
+              <VCardText>
+                <VForm ref="refLocationUpdateForm" v-model="isUpdateLocationFormValid">
+                  <VRow>
+                    <!-- Name input -->
+                    <VCol cols="12" md="12">
+                      <AppTextField
+                        v-model="locationNameUpdate"
+                        label="Name"
+                        placeholder="Name"
+                        :rules="[requiredValidator]"
+                      />
+                    </VCol>
+
+                    <VCol cols="12">
+                      <div id="" class="map-container">
+                        <div id="mapContainerUpdate" style="height: 500px; width: 100%; border-radius: 8px;"></div>
+                      </div>
+
+                    </VCol>
+                  </VRow>
+                </VForm>
+              </VCardText>
+
+              <VCardText class="d-flex justify-end flex-wrap gap-3">
+                <VBtn variant="tonal" color="secondary" @click="isEditLocationModal = false">
+                  Close
+                </VBtn>
+                <VBtn @click="submitUpdateLocation">
                   Update
                 </VBtn>
               </VCardText>
@@ -3130,6 +3339,13 @@ onMounted(() => {
 }
 
 .v-dialog--active #mapContainer {
+  height: 300px !important;
+  width: 100% !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.v-dialog--active #mapContainerUpdate {
   height: 300px !important;
   width: 100% !important;
   position: relative !important;
