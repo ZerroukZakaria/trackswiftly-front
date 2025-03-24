@@ -1399,24 +1399,33 @@ const initMap = () => {
 
   mapInstance = new mapboxgl.Map({
     container: 'mapContainer',
+    // style: 'mapbox://styles/mapbox/satellite-v9', 
+    // Alternatively, try one of these:
+    // style: 'mapbox://styles/mapbox/light-v10',
+    // style: 'mapbox://styles/mapbox/dark-v10',
+    // style: 'mapbox://styles/mapbox/outdoors-v11',
     style: 'mapbox://styles/mapbox/streets-v11',
     center: [-6.8498, 33.9716], // Morocco's coordinates (Rabat)
     zoom: 5, // Adjust zoom level as needed
+    renderWorldCopies: false // This can help with coordinate issues
+
   });
 
 
   mapInstance.on('load', () => {
     hideAttributionControl();
+    mapInstance.resize();
+
   });
 
   // Add click event to get lat/lng and place a marker
   mapInstance.on('click', (event) => {
-    const { lng, lat } = event.lngLat;
 
-    locationLong.value = lng;
-    locationLat.value = lat;
+    const coordinates = event.lngLat;
+      locationLong.value = coordinates.lng;
+      locationLat.value = coordinates.lat;
 
-    console.log('Clicked coordinates:', lng, lat);
+    console.log('Clicked coordinates:', coordinates.lng, coordinates.lat);
 
     // If a marker already exists, remove it
     if (currentMarker) {
@@ -1424,8 +1433,11 @@ const initMap = () => {
     }
 
     // Create a new marker and set its position at the clicked coordinates
-    currentMarker = new mapboxgl.Marker()
-      .setLngLat([lng, lat])
+    currentMarker = new mapboxgl.Marker({
+        color: "#FF0000",  // Optional: make it more visible
+        draggable: false   // Optional: prevent accidental movement
+      })
+      .setLngLat(coordinates)
       .addTo(mapInstance);
   });
 };
@@ -1435,6 +1447,7 @@ const openAddLocaitonModal = () => {
 
   nextTick(() => {
     initMap();
+
   });
 };
 
@@ -1696,42 +1709,45 @@ onMounted(() => {
         </VDialog>
 
 
-        <!-- 👉 Add new location -->
-        <VDialog persistent v-model="isAddLocationModal" max-width="600">
-          <DialogCloseBtn @click="isAddLocationModal = !isAddLocationModal" />
+          <!-- 👉 Add new location -->
+          <VDialog persistent v-model="isAddLocationModal" max-width="600">
+            <DialogCloseBtn @click="isAddLocationModal = !isAddLocationModal" />
 
-          <!-- Dialog Content -->
-          <VCard title="Add Location">
-            <VCardText>
-              <VForm ref="refLocationForm" v-model="isAddLocationFormValid">
-                <VRow>
-                  <!-- Name input -->
-                  <VCol cols="12" md="12">
-                    <AppTextField
-                      v-model="locationName"
-                      label="Name"
-                      placeholder="Name"
-                      :rules="[requiredValidator]"
-                    />
-                  </VCol>
+            <!-- Dialog Content -->
+            <VCard title="Add Location">
+              <VCardText>
+                <VForm ref="refLocationForm" v-model="isAddLocationFormValid">
+                  <VRow>
+                    <!-- Name input -->
+                    <VCol cols="12" md="12">
+                      <AppTextField
+                        v-model="locationName"
+                        label="Name"
+                        placeholder="Name"
+                        :rules="[requiredValidator]"
+                      />
+                    </VCol>
 
-                  <VCol cols="12">
-                    <div id="mapContainer" style="height: 300px; border-radius: 8px;"></div>
-                  </VCol>
-                </VRow>
-              </VForm>
-            </VCardText>
+                    <VCol cols="12">
+                      <div id="" class="map-container">
+                        <div id="mapContainer" style="height: 500px; width: 100%; border-radius: 8px;"></div>
+                      </div>
 
-            <VCardText class="d-flex justify-end flex-wrap gap-3">
-              <VBtn variant="tonal" color="secondary" @click="isAddLocationModal = false">
-                Close
-              </VBtn>
-              <VBtn @click="submitAddVehicleLocation">
-                Submit
-              </VBtn>
-            </VCardText>
-          </VCard>
-        </VDialog>
+                    </VCol>
+                  </VRow>
+                </VForm>
+              </VCardText>
+
+              <VCardText class="d-flex justify-end flex-wrap gap-3">
+                <VBtn variant="tonal" color="secondary" @click="isAddLocationModal = false">
+                  Close
+                </VBtn>
+                <VBtn @click="submitAddVehicleLocation">
+                  Submit
+                </VBtn>
+              </VCardText>
+            </VCard>
+          </VDialog>
 
 
 
@@ -3091,11 +3107,24 @@ onMounted(() => {
   padding: 5px;
 }
 
-#mapContainer {
+.map-container {
   height: 300px;
   width: 100%;
   border-radius: 8px;
-  position: relative; /* Ensure the container has proper positioning */
+  position: relative;
+  overflow: hidden;
+}
+
+.map-dialog .mapboxgl-canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.v-dialog--active #mapContainer {
+  height: 300px !important;
+  width: 100% !important;
+  position: relative !important;
+  overflow: hidden !important;
 }
 
 
