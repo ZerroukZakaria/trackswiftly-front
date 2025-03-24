@@ -6,6 +6,10 @@ import { VForm } from 'vuetify/components/VForm'
 import { VDataTableServer } from 'vuetify/labs/VDataTable'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css';
+import '@mapbox/mapbox-gl-geocoder/lib/mapbox-gl-geocoder.css';
+import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
+
+
 
 import api from '@/utils/axios'
 
@@ -340,9 +344,6 @@ const saveVehicle = async () => {
         icon: "success",
         title: "Success!",
         text: `Vehicle added successfully.`,
-        didOpen: () => {
-        document.querySelector('.swal2-confirm').style.color = 'white';
-      }
      });
 
      isAddVehicleDrawer.value = false;
@@ -376,9 +377,6 @@ const addVehicleType = async () => {
       icon: "success",
       title: "Success!",
       text: `Type added successfully.`,
-      didOpen: () => {
-      document.querySelector('.swal2-confirm').style.color = 'white';
-    }
     });
 
 
@@ -430,9 +428,6 @@ const addVehicleModel = async () => {
       icon: "success",
       title: "Success!",
       text: `Model added successfully.`,
-      didOpen: () => {
-      document.querySelector('.swal2-confirm').style.color = 'white';
-    }
     });
 
     isAddModelModal.value = false;
@@ -475,9 +470,6 @@ const addVehicleGroup = async () => {
       icon: "success",
       title: "Success!",
       text: `Group added successfully.`,
-      didOpen: () => {
-      document.querySelector('.swal2-confirm').style.color = 'white';
-    }
     });
 
     
@@ -520,9 +512,6 @@ const addVehicleLocation = async() => {
       icon: "success",
       title: "Success!",
       text: `Location added successfully.`,
-      didOpen: () => {
-      document.querySelector('.swal2-confirm').style.color = 'white';
-    }
     });
 
     
@@ -641,11 +630,6 @@ const deleteModel = async (id: number) => {
     cancelButtonColor: "#6c757d",
     confirmButtonText: "Yes, delete it!",
     cancelButtonText: "Cancel",
-    didOpen: () => {
-        document.querySelector('.swal2-confirm').style.color = 'white';
-        document.querySelector('.swal2-cancel').style.color = 'white';
-
-    }
   });
 
   if(result.isConfirmed) {
@@ -661,9 +645,6 @@ const deleteModel = async (id: number) => {
           icon: "success",
           title: "Success!",
           text: `Model deleted successfully.`,
-          didOpen: () => {
-          document.querySelector('.swal2-confirm').style.color = 'white';
-        }
       });
 
     getModels();
@@ -676,9 +657,6 @@ const deleteModel = async (id: number) => {
           icon: "error",
           title: "Error",
           text: "Failed to delete the model. Please try again.",
-          didOpen: () => {
-          document.querySelector('.swal2-confirm').style.color = 'white';
-        }
       });
     }
   }
@@ -694,11 +672,6 @@ const deleteType = async (id: number) => {
     cancelButtonColor: "#6c757d",
     confirmButtonText: "Yes, delete it!",
     cancelButtonText: "Cancel",
-    didOpen: () => {
-        document.querySelector('.swal2-confirm').style.color = 'white';
-        document.querySelector('.swal2-cancel').style.color = 'white';
-
-    }
   });
 
   if(result.isConfirmed) {
@@ -714,9 +687,7 @@ const deleteType = async (id: number) => {
           icon: "success",
           title: "Success!",
           text: `Type deleted successfully.`,
-          didOpen: () => {
-          document.querySelector('.swal2-confirm').style.color = 'white';
-        }
+
       });
 
     getTypes();
@@ -729,9 +700,7 @@ const deleteType = async (id: number) => {
           icon: "error",
           title: "Error",
           text: "Failed to delete the type. Please try again.",
-          didOpen: () => {
-          document.querySelector('.swal2-confirm').style.color = 'white';
-        }
+
       });
     }
   }
@@ -747,11 +716,7 @@ const deleteGroup = async (id: number) => {
     cancelButtonColor: "#6c757d",
     confirmButtonText: "Yes, delete it!",
     cancelButtonText: "Cancel",
-    didOpen: () => {
-        document.querySelector('.swal2-confirm').style.color = 'white';
-        document.querySelector('.swal2-cancel').style.color = 'white';
 
-    }
   });
 
   if(result.isConfirmed) {
@@ -767,9 +732,7 @@ const deleteGroup = async (id: number) => {
           icon: "success",
           title: "Success!",
           text: `Group deleted successfully.`,
-          didOpen: () => {
-          document.querySelector('.swal2-confirm').style.color = 'white';
-        }
+
       });
 
     getGroups();
@@ -782,9 +745,7 @@ const deleteGroup = async (id: number) => {
           icon: "error",
           title: "Error",
           text: "Failed to delete the group. Please try again.",
-          didOpen: () => {
-          document.querySelector('.swal2-confirm').style.color = 'white';
-        }
+
       });
     }
   }
@@ -800,11 +761,7 @@ const deleteLocation = async(id: number) => {
     cancelButtonColor: "#6c757d",
     confirmButtonText: "Yes, delete it!",
     cancelButtonText: "Cancel",
-    didOpen: () => {
-        document.querySelector('.swal2-confirm').style.color = 'white';
-        document.querySelector('.swal2-cancel').style.color = 'white';
 
-    }
   });
 
   if(result.isConfirmed) {
@@ -820,9 +777,6 @@ const deleteLocation = async(id: number) => {
           icon: "success",
           title: "Success!",
           text: `Location deleted successfully.`,
-          didOpen: () => {
-          document.querySelector('.swal2-confirm').style.color = 'white';
-        }
       });
 
     getLocations();
@@ -835,9 +789,7 @@ const deleteLocation = async(id: number) => {
           icon: "error",
           title: "Error",
           text: "Failed to delete the location. Please try again.",
-          didOpen: () => {
-          document.querySelector('.swal2-confirm').style.color = 'white';
-        }
+
       });
     }
   }
@@ -954,11 +906,6 @@ const deleteVehicle = async (id: number) => {
     cancelButtonColor: "#6c757d",
     confirmButtonText: "Yes, delete it!",
     cancelButtonText: "Cancel",
-    didOpen: () => {
-        document.querySelector('.swal2-confirm').style.color = 'white';
-        document.querySelector('.swal2-cancel').style.color = 'white';
-
-    }
   });
 
   if(result.isConfirmed) {
@@ -974,9 +921,7 @@ const deleteVehicle = async (id: number) => {
           icon: "success",
           title: "Success!",
           text: `Vehicle deleted successfully.`,
-          didOpen: () => {
-          document.querySelector('.swal2-confirm').style.color = 'white';
-        }
+
       });
 
     getVehicles();
@@ -989,9 +934,7 @@ const deleteVehicle = async (id: number) => {
           icon: "error",
           title: "Error",
           text: "Failed to delete the vehicle. Please try again.",
-          didOpen: () => {
-          document.querySelector('.swal2-confirm').style.color = 'white';
-        }
+
       });
     }
   }
@@ -1112,9 +1055,6 @@ try {
     icon: "success",
     title: "Success!",
     text: "Vehicle updated successfully.",
-    didOpen: () => {
-      document.querySelector(".swal2-confirm").style.color = "white";
-    },
   });
 
   isVehicleDialogDrawer.value = false;
@@ -1190,9 +1130,6 @@ const updateType = async () => {
       icon: "success",
       title: "Success!",
       text: "Type updated successfully.",
-      didOpen: () => {
-        document.querySelector(".swal2-confirm").style.color = "white";
-      },
     });
 
     isEditTypeModal.value = false;
@@ -1290,9 +1227,6 @@ const updateModel = async () => {
       icon: "success",
       title: "Success!",
       text: "Type updated successfully.",
-      didOpen: () => {
-        document.querySelector(".swal2-confirm").style.color = "white";
-      },
     });
 
     isEditModelModal.value = false;
@@ -1357,9 +1291,6 @@ const updateGroup = async () => {
       icon: "success",
       title: "Success!",
       text: "Group updated successfully.",
-      didOpen: () => {
-        document.querySelector(".swal2-confirm").style.color = "white";
-      },
     });
 
     isEditGroupModal.value = false;
@@ -1421,7 +1352,6 @@ const updateLocation = async() => {
     return;
   }
 
-  console.log(locationData);
 
   try {
     const response = await api.put(
@@ -1439,9 +1369,6 @@ const updateLocation = async() => {
       icon: "success",
       title: "Success!",
       text: "Location updated successfully.",
-      didOpen: () => {
-        document.querySelector(".swal2-confirm").style.color = "white";
-      },
     });
 
     isEditLocationModal.value = false;
@@ -1466,7 +1393,7 @@ const submitUpdateLocation = async() => {
 
 
 let currentMarker: mapboxgl.Marker | null = null; 
-let mapInstance: mapboxgl.Map | null = null; // Initialize as null
+let mapInstance: mapboxgl.Map | null = null; 
 
 let mapInstanceUpdate: mapboxgl.Map | null = null;
 
@@ -1492,6 +1419,22 @@ const initMap = (mapContainer: string) => {
   });
 
 
+  mapInstance.addControl(
+    new MapboxGeocoder({
+        accessToken: mapboxgl.accessToken,
+        mapboxgl: mapboxgl,
+        marker: false
+
+    }), 'top-right'
+  );
+
+
+  mapInstance.addControl(new mapboxgl.FullscreenControl(), 'top-left');
+  mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-left');
+
+
+
+
   mapInstance.on("style.load", function () {
     function applyWorldviewFilters() {
         const WORLD_VIEW = "MA";
@@ -1513,8 +1456,6 @@ const initMap = (mapContainer: string) => {
     const coordinates = event.lngLat;
       locationLong.value = coordinates.lng;
       locationLat.value = coordinates.lat;
-
-    console.log('Clicked coordinates:', coordinates.lng, coordinates.lat);
 
     // If a marker already exists, remove it
     if (currentMarker) {
@@ -1567,6 +1508,23 @@ const initMapUpdate = (lat: number, long: number) => {
         });
 
   });
+
+
+
+  mapInstanceUpdate.addControl(
+    new MapboxGeocoder({
+        accessToken: mapboxgl.accessToken,
+        mapboxgl: mapboxgl,
+        marker: false
+
+    }), 'top-right'
+  );
+
+
+
+  mapInstanceUpdate.addControl(new mapboxgl.FullscreenControl(), 'top-left');
+  mapInstanceUpdate.addControl(new mapboxgl.NavigationControl(), 'top-left');
+
 
 
   mapInstanceUpdate.on("style.load", function () {
@@ -1883,9 +1841,7 @@ onMounted(() => {
         <!-- 👉 Edit location-->
 
         
-        <VDialog persistent  v-model="isEditLocationModal"
-        max-width="600"
-        >
+        <VDialog persistent  v-model="isEditLocationModal" max-width="800">
 
         <DialogCloseBtn @click="isEditLocationModal = !isEditLocationModal" />
 
@@ -1928,7 +1884,7 @@ onMounted(() => {
 
 
           <!-- 👉 Add new location -->
-          <VDialog persistent v-model="isAddLocationModal" max-width="600">
+          <VDialog persistent v-model="isAddLocationModal" max-width="800">
             <DialogCloseBtn @click="isAddLocationModal = !isAddLocationModal" />
 
             <!-- Dialog Content -->
