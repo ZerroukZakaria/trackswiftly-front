@@ -2,8 +2,6 @@
 
 </script>
 
-
 <template>
-  
-  <h1>hello vro</h1>
+  <h1>devices</h1>
 </template>
