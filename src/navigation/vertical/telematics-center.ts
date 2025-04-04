@@ -10,8 +10,12 @@ export default [
     title: 'Devices',
     icon: { icon: 'tabler-router' },
     to: 'devices-list'
+  },
 
-
+  {
+    title: 'POI',
+    icon: { icon: 'tabler-map-pins' },
+    to: 'poi-list'
   },
 
 

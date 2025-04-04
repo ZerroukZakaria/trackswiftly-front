@@ -19,6 +19,12 @@ export default [
 
 
       },
+
+      {
+        title: 'POI',
+        icon: { icon: 'tabler-map-pins' },
+        to: 'poi-list'
+      },
     ]
   }
 
