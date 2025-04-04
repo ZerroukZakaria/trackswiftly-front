@@ -2599,11 +2599,11 @@ onMounted(() => {
           <!-- 👉 Home Location -->
           <template #item.location="{ item }">
             <VChip
-                color="info"
+                :color="item.homeLocation?.name ? 'error' : 'secondary'"
                 variant="elevated"
                 :label="true"
             >
-                {{ item.homeLocation?.name || 'no location' }}
+                {{ item.homeLocation?.name || 'None' }}
             </VChip>
         </template>
 
