@@ -15,10 +15,11 @@ import api from '@/utils/axios'
 
 const headers = [
   { title: 'Plate', key: 'plate' },
-  { title: 'Description', key: 'mileage' },
+  { title: 'Mileage', key: 'mileage' },
   { title: 'Type', key: 'type' },
   { title: 'Group', key: 'group' },
   { title: 'Model', key: 'model' },
+  { title: 'Location', key: 'location' },
   { title: 'Actions', key: 'actions', sortable: false },
 
 ]
@@ -99,6 +100,7 @@ const Location = ref();
 const vehicleModels = ref([]);
 const vehicleGroups = ref([]);
 const vehicleTypes = ref([]);
+const vehicleLocations = ref([]);
 const totalModels = ref(0);
 
 const totalGroups = ref(0);
@@ -188,6 +190,7 @@ const purchaseDate = ref('')
 const type = ref()
 const model = ref()
 const group = ref()
+const location = ref()
 
 //Update Vehicle refs
 const isFormUpdateValid = ref(false)
@@ -245,6 +248,12 @@ const populateVehicleTMG = async() => {
     vehicleTypes.value = fetchedTypes.map(type => ({
       title: type.name,
       value: type.id,
+    }));
+
+    const fetchedLocations = await getLocations();
+    vehicleLocations.value = fetchedLocations.map(location => ({
+      title: location.name,
+      value: location.id,
     }));
 }
 
@@ -326,7 +335,9 @@ const saveVehicle = async () => {
       purchaseDate: formattedPurchaseDate,
       vehicleTypeId: type.value, 
       modelId: model.value, 
-      vehicleGroupId: group.value ?? 1
+      vehicleGroupId: group.value ?? 1,
+      homeLocationId: location.value
+      
     };
 
 
@@ -2268,6 +2279,17 @@ onMounted(() => {
                 </VCol>
 
 
+              <!-- 👉 Home location -->
+                <VCol cols="12">
+                  <AppSelect
+                    v-model="location"
+                    label="Select Location"
+                    placeholder="Select Location"
+                    :items="vehicleLocations"
+                  />
+                </VCol>
+
+
 
                 <!-- 👉 Submit and Cancel -->
                 <VCol cols="12">
@@ -2572,6 +2594,18 @@ onMounted(() => {
                 {{ item.model.name }}
               </VChip>
           </template>
+
+
+          <!-- 👉 Home Location -->
+          <template #item.location="{ item }">
+            <VChip
+                color="info"
+                variant="elevated"
+                :label="true"
+            >
+                {{ item.homeLocation?.name || 'no location' }}
+            </VChip>
+        </template>
 
           
 
