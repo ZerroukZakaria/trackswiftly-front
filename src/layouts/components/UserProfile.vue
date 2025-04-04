@@ -18,7 +18,7 @@ const fetchUserData = async () => {
     fullName: 'John Doe',
     username: 'johndoe',
     role: 'Admin',
-    avatar: 'https://example.com/avatar.jpg',
+    avatar: 'public/images/avatars/avatar-1.png',
   }
 }
 
