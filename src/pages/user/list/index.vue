@@ -99,11 +99,6 @@ const changeUserStatus = async (id: number, status: boolean) => {
     cancelButtonColor: "#6c757d",
     confirmButtonText: newStatus ? "Yes, enable!" : "Yes, disable!",
     cancelButtonText: "Cancel",
-    didOpen: () => {
-        document.querySelector('.swal2-confirm').style.color = 'white';
-        document.querySelector('.swal2-cancel').style.color = 'white';
-
-    }
   });
 
   if (result.isConfirmed) {
@@ -124,9 +119,6 @@ const changeUserStatus = async (id: number, status: boolean) => {
         icon: "success",
         title: "Success!",
         text: `User has been ${newStatus ? "enabled" : "disabled"} successfully.`,
-        didOpen: () => {
-        document.querySelector('.swal2-confirm').style.color = 'white';
-      }
       });
 
       getUsers(); 
@@ -138,9 +130,6 @@ const changeUserStatus = async (id: number, status: boolean) => {
         icon: "error",
         title: "Error",
         text: "Failed to update user status. Please try again.",
-        didOpen: () => {
-        document.querySelector('.swal2-confirm').style.color = 'white';
-      }
       });
     }
   }
@@ -256,9 +245,6 @@ const updateUserRole = async (id: number,  role: string) => {
         icon: "success",
         title: "Success!",
         text: `User Role has been updated successfully.`,
-        didOpen: () => {
-        document.querySelector('.swal2-confirm').style.color = 'white';
-      }
      });
 
     getUsers();
@@ -273,9 +259,6 @@ const updateUserRole = async (id: number,  role: string) => {
         icon: "error",
         title: "Error",
         text: "Failed to change the user role. Please try again.",
-        didOpen: () => {
-        document.querySelector('.swal2-confirm').style.color = 'white';
-      }
     });
   }
 
@@ -305,9 +288,6 @@ const inviteUser = async () => {
       icon: 'success',
       title: 'User Invited!',
       text: 'The user has been successfully invited.',
-      didOpen: () => {
-        document.querySelector('.swal2-confirm').style.color = 'white';
-      }
     });
 
     isDialogVisible.value = false; 
@@ -320,9 +300,6 @@ const inviteUser = async () => {
       icon: 'error',
       title: 'Oops!',
       text: 'There was an error inviting the user. Please try again.',
-      didOpen: () => {
-        document.querySelector('.swal2-confirm').style.color = 'white';
-      }
     });
 
     isDialogVisible.value = false; 
