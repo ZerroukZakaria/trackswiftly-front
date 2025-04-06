@@ -8,10 +8,13 @@ import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css';
 import '@mapbox/mapbox-gl-geocoder/lib/mapbox-gl-geocoder.css';
 import MapboxGeocoder from '@mapbox/mapbox-gl-geocoder';
-
-
-
 import api from '@/utils/axios'
+
+
+const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN;
+const API_URL = import.meta.env.VITE_API_URL
+
+console.log(mapboxToken);
 
 const headers = [
   { title: 'Plate', key: 'plate' },
@@ -47,6 +50,7 @@ const groupHeaders = [
 
 const locationHeaders = [
   { title: 'Name', key: 'name' },
+  { title: 'Address', key: 'address' },
   { title: 'Longitude', key: 'longitude' },
   { title: 'Latitude', key: 'latitude' },
   { title: 'Actions', key: 'actions', sortable: false },
@@ -343,7 +347,7 @@ const saveVehicle = async () => {
 
 
     // Send the API request
-    const response = await api.post('https://app.trackswiftly.com/vehicles', [vehicleData], {
+    const response = await api.post(`${API_URL}/vehicles`, [vehicleData], {
       headers: {
         'Accept': '*/*',
         'Content-Type': 'application/json'
@@ -376,7 +380,7 @@ const addVehicleType = async () => {
     };
 
 
-  const response = await api.post('https://app.trackswiftly.com/types', [typeData], {
+  const response = await api.post(`${API_URL}/types`, [typeData], {
       headers: {
         'Accept': '*/*',
         'Content-Type': 'application/json'
@@ -427,7 +431,7 @@ const addVehicleModel = async () => {
     };
 
   
-  const response = await api.post('https://app.trackswiftly.com/models', [modelData], {
+  const response = await api.post(`${API_URL}/models`, [modelData], {
       headers: {
         'Accept': '*/*',
         'Content-Type': 'application/json'
@@ -469,7 +473,7 @@ const addVehicleGroup = async () => {
 
    };
   
-  const response = await api.post('https://app.trackswiftly.com/groups', [groupData], {
+  const response = await api.post(`${API_URL}/groups`, [groupData], {
       headers: {
         'Accept': '*/*',
         'Content-Type': 'application/json'
@@ -511,7 +515,7 @@ const addVehicleLocation = async() => {
     return;
    }
   
-  const response = await api.post('https://app.trackswiftly.com/homelocations', [locationData], {
+  const response = await api.post(`${API_URL}/homelocations`, [locationData], {
       headers: {
         'Accept': '*/*',
         'Content-Type': 'application/json'
@@ -539,7 +543,7 @@ const addVehicleLocation = async() => {
 
 const getVehicles = async () => {
   try {
-    const response = await api.get(`https://app.trackswiftly.com/vehicles?page=${page.value - 1}&pageSize=${itemsPerPage.value}`, {
+    const response = await api.get(`${API_URL}/vehicles?page=${page.value - 1}&pageSize=${itemsPerPage.value}`, {
       headers: {
         'Accept': '*/*',
       }
@@ -557,7 +561,7 @@ const getVehicles = async () => {
 
 const getModels = async () => {
   try {
-    const response = await api.get(`https://app.trackswiftly.com/models?page=${pageModel.value - 1}&pageSize=${itemsPerPageModel.value}`, {
+    const response = await api.get(`${API_URL}/models?page=${pageModel.value - 1}&pageSize=${itemsPerPageModel.value}`, {
       headers: {
         'Accept': '*/*',
       }
@@ -579,7 +583,7 @@ const getModels = async () => {
 }
 const getTypes = async () => {
   try {
-    const response = await api.get(`https://app.trackswiftly.com/types?page=${pageType.value - 1}&pageSize=${itemsPerPageType.value}`, {
+    const response = await api.get(`${API_URL}/types?page=${pageType.value - 1}&pageSize=${itemsPerPageType.value}`, {
       headers: {
         'Accept': '*/*',
       }
@@ -595,7 +599,7 @@ const getTypes = async () => {
 
 const getGroups= async () => {
   try {
-    const response = await api.get(`https://app.trackswiftly.com/groups?page=${pageGroup.value - 1}&pageSize=${itemsPerPageGroup.value}`, {
+    const response = await api.get(`${API_URL}/groups?page=${pageGroup.value - 1}&pageSize=${itemsPerPageGroup.value}`, {
       headers: {
         'Accept': '*/*',
       }
@@ -610,20 +614,42 @@ const getGroups= async () => {
   }
 }
 
+
+const getAddress = async (lat:number, lon:number) => {
+  try {
+    const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lon},${lat}.json?access_token=${mapboxToken}`);
+    const data = await response.json();
+    return data.features[0]?.place_name || "";
+  } catch (err) {
+    console.error("Error reverse geocoding:", err);
+    return "Error fetching address";
+  }
+};
+
 const getLocations = async() => {
   try {
-    const response = await api.get(`https://app.trackswiftly.com/homelocations?page=${pageLocation.value - 1}&pageSize=${itemsPerPageLocation.value}`, {
+    const response = await api.get(`${API_URL}/homelocations?page=${pageLocation.value - 1}&pageSize=${itemsPerPageLocation.value}`, {
       headers: {
         'Accept': '*/*',
       }
     });
 
+    let locationsData = response.data.content;
 
-    locations.value = response.data.content
+    // Add address field to each location using reverse geocoding
+    const withAddresses = await Promise.all(locationsData.map(async (loc) => {
+      const address = await getAddress(loc.latitude, loc.longitude);
+      return { ...loc, address };
+    }));
+
+    locations.value = withAddresses;
     totalLocations.value = response.data.totalElements || 0;
 
-
+    console.log(locations.value);
+    return withAddresses;
     
+
+
 
     return response.data.content
   } catch (error) {
@@ -645,7 +671,7 @@ const deleteModel = async (id: number) => {
 
   if(result.isConfirmed) {
       try {
-      await api.delete(`https://app.trackswiftly.com/models/${id}`, {
+      await api.delete(`${API_URL}/models/${id}`, {
         headers: {
           'Accept': '*/*',
         }
@@ -687,7 +713,7 @@ const deleteType = async (id: number) => {
 
   if(result.isConfirmed) {
       try {
-      await api.delete(`https://app.trackswiftly.com/types/${id}`, {
+      await api.delete(`${API_URL}/types/${id}`, {
         headers: {
           'Accept': '*/*',
         }
@@ -732,7 +758,7 @@ const deleteGroup = async (id: number) => {
 
   if(result.isConfirmed) {
       try {
-      await api.delete(`https://app.trackswiftly.com/groups/${id}`, {
+      await api.delete(`${API_URL}/groups/${id}`, {
         headers: {
           'Accept': '*/*',
         }
@@ -777,7 +803,7 @@ const deleteLocation = async(id: number) => {
 
   if(result.isConfirmed) {
       try {
-      await api.delete(`https://app.trackswiftly.com/homelocations/${id}`, {
+      await api.delete(`${API_URL}/homelocations/${id}`, {
         headers: {
           'Accept': '*/*',
         }
@@ -809,7 +835,7 @@ const deleteLocation = async(id: number) => {
 
 const getVehicle = async (id: number) => {
   try {
-    const response = await api.get(`https://app.trackswiftly.com/vehicles/${id}`, {
+    const response = await api.get(`${API_URL}/vehicles/${id}`, {
       headers: {
         'Accept': '*/*',
       }
@@ -830,7 +856,7 @@ const getVehicle = async (id: number) => {
 
 const getModel = async(id: number) => {
   try {
-    const response = await api.get(`https://app.trackswiftly.com/models/${id}`, {
+    const response = await api.get(`${API_URL}/models/${id}`, {
       headers: {
         'Accept': '*/*',
       }
@@ -849,7 +875,7 @@ const getModel = async(id: number) => {
 }
 const getType = async(id: number) => {
   try {
-    const response = await api.get(`https://app.trackswiftly.com/types/${id}`, {
+    const response = await api.get(`${API_URL}/types/${id}`, {
       headers: {
         'Accept': '*/*',
       }
@@ -867,7 +893,7 @@ const getType = async(id: number) => {
 }
 const getGroup = async(id: number) => {
   try {
-    const response = await api.get(`https://app.trackswiftly.com/groups/${id}`, {
+    const response = await api.get(`${API_URL}/groups/${id}`, {
       headers: {
         'Accept': '*/*',
       }
@@ -888,7 +914,7 @@ const getGroup = async(id: number) => {
 
 const getLocation = async (id: number) => {
   try {
-    const response = await api.get(`https://app.trackswiftly.com/homelocations/${id}`, {
+    const response = await api.get(`${API_URL}/homelocations/${id}`, {
       headers: {
         'Accept': '*/*',
       }
@@ -921,7 +947,7 @@ const deleteVehicle = async (id: number) => {
 
   if(result.isConfirmed) {
       try {
-      await api.delete(`https://app.trackswiftly.com/vehicles/${id}`, {
+      await api.delete(`${API_URL}/vehicles/${id}`, {
         headers: {
           'Accept': '*/*',
         }
@@ -1052,7 +1078,7 @@ if (Object.keys(vehicleData).length === 0) {
 
 try {
   const response = await api.put(
-    `https://app.trackswiftly.com/vehicles/${vehicle.value.id}`,
+    `${API_URL}/vehicles/${vehicle.value.id}`,
     vehicleData,
     {
       headers: {
@@ -1127,7 +1153,7 @@ const updateType = async () => {
 
   try {
     const response = await api.put(
-      `https://app.trackswiftly.com/types/${Type.value.id}`,
+      `${API_URL}/types/${Type.value.id}`,
       typeData,
       {
         headers: {
@@ -1224,7 +1250,7 @@ const updateModel = async () => {
 
   try {
     const response = await api.put(
-      `https://app.trackswiftly.com/models/${Model.value.id}`,
+      `${API_URL}/models/${Model.value.id}`,
       ModelData,
       {
         headers: {
@@ -1288,7 +1314,7 @@ const updateGroup = async () => {
 
   try {
     const response = await api.put(
-      `https://app.trackswiftly.com/groups/${Group.value.id}`,
+      `${API_URL}/groups/${Group.value.id}`,
       groupData,
       {
         headers: {
@@ -1366,7 +1392,7 @@ const updateLocation = async() => {
 
   try {
     const response = await api.put(
-      `https://app.trackswiftly.com/homelocations/${Location.value.id}`,
+      `${API_URL}/homelocations/${Location.value.id}`,
       locationData,
       {
         headers: {
@@ -1414,7 +1440,7 @@ const initMap = (mapContainer: string) => {
     mapInstance.remove(); // Destroy the existing map instance
   }
 
-  mapboxgl.accessToken = 'pk.eyJ1Ijoic2FhZG92c2t5IiwiYSI6ImNsZ3VxeDJ0bTBvMDYzZm81cWd2YWpkNTEifQ.rT0oeL7LOwbvkPYCFSVFWQ';
+  mapboxgl.accessToken = mapboxToken;
 
   mapInstance = new mapboxgl.Map({
     container: mapContainer,
@@ -3221,6 +3247,15 @@ onMounted(() => {
               </div>
             </div>
           </template>
+
+
+          <!-- 👉 Address -->
+          <template #item.address="{ item }">
+          <div class="d-flex align-center gap-4">
+
+            <span>{{ item.address }}</span>
+          </div>
+        </template>
 
 
           <!-- 👉 latitude -->
