@@ -68,8 +68,6 @@ const getPois = async () => {
     pois.value = response.data.content
     totalPois.value = response.data.totalElements 
 
-    console.log(pois.value);
-
 
   } catch (error) {
     console.error("Error fetching POIs:", error.response?.data || error.message);
@@ -77,6 +75,54 @@ const getPois = async () => {
 };
 
 
+const deletePoi = async (id: number) => {
+
+
+  
+  const result = await Swal.fire({
+    title: `Are you sure?`,
+    text: `Do you really want to delete this POI?`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#6c757d",
+    confirmButtonText: "Yes, delete it!",
+    cancelButtonText: "Cancel",
+  });
+
+  if(result.isConfirmed) {
+      try {
+      await api.delete(`${API_URL}/gw-client/pois/${id}`, {
+        headers: {
+          'Accept': '*/*',
+        }
+      });
+
+
+      Swal.fire({
+          icon: "success",
+          title: "Success!",
+          text: `POI deleted successfully.`,
+
+      });
+
+    getPois();
+
+
+    } catch (error) {
+      console.error("Error fetching POIs:", error.response?.data || error.message);
+
+      Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Failed to delete the POI. Please try again.",
+
+      });
+    }
+  }
+
+
+}
 
 
 
@@ -229,7 +275,7 @@ const getPois = async () => {
           </IconBtn>
 
             <!-- delete user  -->
-            <IconBtn @click="deleteVehicle(item.id)">
+            <IconBtn @click="deletePoi(item.id)">
               <VIcon icon="tabler-trash" />
             </IconBtn>
 
