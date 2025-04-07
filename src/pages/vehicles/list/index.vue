@@ -14,7 +14,6 @@ import api from '@/utils/axios'
 const mapboxToken = import.meta.env.VITE_MAPBOX_TOKEN;
 const API_URL = import.meta.env.VITE_API_URL
 
-console.log(mapboxToken);
 
 const headers = [
   { title: 'Plate', key: 'plate' },
@@ -553,6 +552,8 @@ const getVehicles = async () => {
     vehicles.value = response.data.content
     totalVehicles.value = response.data.totalElements 
 
+    console.log(vehicles.value);
+
 
   } catch (error) {
     console.error("Error fetching vehicles:", error.response?.data || error.message);
@@ -645,7 +646,6 @@ const getLocations = async() => {
     locations.value = withAddresses;
     totalLocations.value = response.data.totalElements || 0;
 
-    console.log(locations.value);
     return withAddresses;
     
 
