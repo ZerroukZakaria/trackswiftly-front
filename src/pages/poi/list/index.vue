@@ -554,9 +554,6 @@ const submitUpdateGroup = async() => {
   }
 }
 
-
-
-
 const deletePoi = async (id: number) => {
 
 
@@ -589,7 +586,6 @@ const deletePoi = async (id: number) => {
       });
 
     getPois();
-
 
     } catch (error) {
       console.error("Error fetching POIs:", error.response?.data || error.message);
@@ -657,8 +653,6 @@ if(result.isConfirmed) {
 
 const deleteGroup = async (id: number) => {
 
-
-  
 const result = await Swal.fire({
   title: `Are you sure?`,
   text: `Do you really want to delete this Group?`,
@@ -736,7 +730,7 @@ if(result.isConfirmed) {
                       v-model="typeNameUpdate"
                       label="Name"
                       placeholder="Name"
-                      :rules = "[requiredValidator, alphaValidator]"
+                      :rules = "[requiredValidator, nameValidator]"
                     />
                   </VCol>
                   <VCol cols="12">
@@ -747,7 +741,7 @@ if(result.isConfirmed) {
                       clearable
                       clear-icon="tabler-circle-x"
                       counter
-                      :rules = "[alphaWithSpacesValidator]"
+                      :rules = "[descriptionValidator]"
                       />
                   </VCol>
                 </VRow>
@@ -789,7 +783,7 @@ if(result.isConfirmed) {
                       v-model="groupNameUpdate"
                       label="Name"
                       placeholder="Name"
-                      :rules = "[requiredValidator, alphaValidator]"
+                      :rules = "[requiredValidator, nameValidator]"
                     />
                   </VCol>
                   <VCol cols="12">
@@ -800,7 +794,7 @@ if(result.isConfirmed) {
                       clearable
                       clear-icon="tabler-circle-x"
                       counter
-                      :rules = "[alphaWithSpacesValidator]"
+                      :rules = "[descriptionValidator]"
                       />
                   </VCol>
                 </VRow>
@@ -842,7 +836,7 @@ if(result.isConfirmed) {
                       v-model="typeName"
                       label="Name"
                       placeholder="Name"
-                      :rules = "[requiredValidator, alphaValidator]"
+                      :rules = "[requiredValidator, nameValidator]"
                     />
                   </VCol>
                   <VCol cols="12">
@@ -853,7 +847,7 @@ if(result.isConfirmed) {
                       clearable
                       clear-icon="tabler-circle-x"
                       counter
-                      :rules = "[alphaWithSpacesValidator]"
+                      :rules = "[descriptionValidator]"
                       />
                   </VCol>
                 </VRow>
@@ -894,7 +888,7 @@ if(result.isConfirmed) {
                       v-model="groupName"
                       label="Name"
                       placeholder="Name"
-                      :rules = "[requiredValidator, alphaValidator]"
+                      :rules = "[requiredValidator, nameValidator]"
                     />
                   </VCol>
                   <VCol cols="12">
@@ -905,7 +899,7 @@ if(result.isConfirmed) {
                       clearable
                       clear-icon="tabler-circle-x"
                       counter
-                      :rules = "[alphaWithSpacesValidator]"
+                      :rules = "[descriptionValidator]"
                       />
                   </VCol>
                 </VRow>

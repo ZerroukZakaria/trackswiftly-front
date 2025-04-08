@@ -1647,7 +1647,7 @@ onMounted(() => {
                       v-model="typeNameUpdate"
                       label="Name"
                       placeholder="Name"
-                      :rules = "[requiredValidator, alphaValidator]"
+                      :rules = "[requiredValidator, nameValidator]"
                     />
                   </VCol>
                   <VCol cols="12">
@@ -1658,7 +1658,7 @@ onMounted(() => {
                       clearable
                       clear-icon="tabler-circle-x"
                       counter
-                      :rules = "[alphaWithSpacesValidator]"
+                      :rules = "[descriptionValidator]"
                       />
                   </VCol>
                 </VRow>
@@ -1700,7 +1700,7 @@ onMounted(() => {
                       v-model="groupNameUpdate"
                       label="Name"
                       placeholder="Name"
-                      :rules = "[requiredValidator, alphaValidator]"
+                      :rules = "[requiredValidator, nameValidator]"
                     />
                   </VCol>
                   <VCol cols="12">
@@ -1711,7 +1711,7 @@ onMounted(() => {
                       clearable
                       clear-icon="tabler-circle-x"
                       counter
-                      :rules = "[alphaWithSpacesValidator]"
+                      :rules = "[descriptionValidator]"
                       />
                   </VCol>
                 </VRow>
@@ -1979,7 +1979,7 @@ onMounted(() => {
                       v-model="typeName"
                       label="Name"
                       placeholder="Name"
-                      :rules = "[requiredValidator, alphaValidator]"
+                      :rules = "[requiredValidator, nameValidator]"
                     />
                   </VCol>
                   <VCol cols="12">
@@ -1990,7 +1990,7 @@ onMounted(() => {
                       clearable
                       clear-icon="tabler-circle-x"
                       counter
-                      :rules = "[alphaWithSpacesValidator]"
+                      :rules = "[descriptionValidator]"
                       />
                   </VCol>
                 </VRow>
@@ -2164,7 +2164,7 @@ onMounted(() => {
                       v-model="groupName"
                       label="Name"
                       placeholder="Name"
-                      :rules = "[requiredValidator, alphaValidator]"
+                      :rules = "[requiredValidator, nameValidator]"
                     />
                   </VCol>
                   <VCol cols="12">
@@ -2175,7 +2175,7 @@ onMounted(() => {
                       clearable
                       clear-icon="tabler-circle-x"
                       counter
-                      :rules = "[alphaWithSpacesValidator]"
+                      :rules = "[descriptionValidator]"
                       />
                   </VCol>
                 </VRow>

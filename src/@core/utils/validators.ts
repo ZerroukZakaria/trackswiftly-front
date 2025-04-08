@@ -151,3 +151,31 @@ export const positiveNumberValidator = (value: unknown) => {
     : 'This field must be a positive number';
 };
 
+
+// 👉 Description Validator
+export const descriptionValidator = (value: unknown) => {
+  if (isEmpty(value)) return true;
+
+  const stringValue = String(value);
+
+  // Length check
+  if (stringValue.length < 20 || stringValue.length > 255)
+    return 'Description must be between 20 and 255 characters long';
+
+  // Regex check
+  const regex = /^[A-Za-z0-9\s.,!?;:'"()-]+$/;
+
+  return regex.test(stringValue) || 'Description contains invalid characters';
+};
+
+
+// 👉 Name Validator
+
+export const nameValidator = (value: unknown) => {
+  if (isEmpty(value)) return true;
+
+  const regex = /^[A-Za-zÀ-ÖØ-öø-ÿ\s'-]+$/;
+
+  return regex.test(String(value)) || 'The Name field may only contain alphabetic characters, spaces, hyphens, or apostrophes';
+};
+

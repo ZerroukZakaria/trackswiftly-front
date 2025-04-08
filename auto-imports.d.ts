@@ -50,6 +50,7 @@ declare global {
   const defineLoader: typeof import('vue-router/auto')['defineLoader']
   const definePage: typeof import('unplugin-vue-router/runtime')['_definePage']
   const defineStore: typeof import('pinia')['defineStore']
+  const descriptionValidator: typeof import('./src/@core/utils/validators')['descriptionValidator']
   const eagerComputed: typeof import('@vueuse/core')['eagerComputed']
   const effectScope: typeof import('vue')['effectScope']
   const emailValidator: typeof import('./src/@core/utils/validators')['emailValidator']
@@ -78,6 +79,7 @@ declare global {
   const kFormatter: typeof import('./src/@core/utils/formatters')['kFormatter']
   const keycloak: typeof import('./src/utils/types')['keycloak']
   const lengthValidator: typeof import('./src/@core/utils/validators')['lengthValidator']
+  const nameValidator: typeof import('./src/@core/utils/validators')['nameValidator']
   const logicAnd: typeof import('@vueuse/math')['logicAnd']
   const logicNot: typeof import('@vueuse/math')['logicNot']
   const logicOr: typeof import('@vueuse/math')['logicOr']
@@ -88,6 +90,7 @@ declare global {
   const mapStores: typeof import('pinia')['mapStores']
   const mapWritableState: typeof import('pinia')['mapWritableState']
   const markRaw: typeof import('vue')['markRaw']
+  const nameValidator: typeof import('./src/@core/utils/validators')['nameValidator']
   const nextTick: typeof import('vue')['nextTick']
   const numberValidator: typeof import('./src/@core/utils/validators')['numberValidator']
   const onActivated: typeof import('vue')['onActivated']
@@ -420,6 +423,7 @@ declare module 'vue' {
     readonly defineLoader: UnwrapRef<typeof import('vue-router/auto')['defineLoader']>
     readonly definePage: UnwrapRef<typeof import('unplugin-vue-router/runtime')['_definePage']>
     readonly defineStore: UnwrapRef<typeof import('pinia')['defineStore']>
+    readonly descriptionValidator: UnwrapRef<typeof import('./src/@core/utils/validators')['descriptionValidator']>
     readonly eagerComputed: UnwrapRef<typeof import('@vueuse/core')['eagerComputed']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
     readonly emailValidator: UnwrapRef<typeof import('./src/@core/utils/validators')['emailValidator']>
@@ -456,6 +460,7 @@ declare module 'vue' {
     readonly mapStores: UnwrapRef<typeof import('pinia')['mapStores']>
     readonly mapWritableState: UnwrapRef<typeof import('pinia')['mapWritableState']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
+    readonly nameValidator: UnwrapRef<typeof import('./src/@core/utils/validators')['nameValidator']>
     readonly nextTick: UnwrapRef<typeof import('vue')['nextTick']>
     readonly numberValidator: UnwrapRef<typeof import('./src/@core/utils/validators')['numberValidator']>
     readonly onActivated: UnwrapRef<typeof import('vue')['onActivated']>
