@@ -552,8 +552,6 @@ const getVehicles = async () => {
     vehicles.value = response.data.content
     totalVehicles.value = response.data.totalElements 
 
-    console.log(vehicles.value);
-
 
   } catch (error) {
     console.error("Error fetching vehicles:", error.response?.data || error.message);
