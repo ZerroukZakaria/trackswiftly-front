@@ -205,6 +205,7 @@ const purchaseDateUpdate = ref('')
 const typeUpdate = ref()
 const modelUpdate = ref()
 const groupUpdate = ref()
+const locationUpdate = ref()
 
 
 // Data table options
@@ -1020,6 +1021,7 @@ const openVehicleDrawer = async (id: number) => {
 
   populateVehicleTMG();
 
+  console.log(vehicle.value)
 
   licensePlateUpdate.value = vehicle.value.licensePlate
   vinUpdate.value = vehicle.value.vin
@@ -1028,6 +1030,7 @@ const openVehicleDrawer = async (id: number) => {
   typeUpdate.value = vehicle.value.vehicleType.id
   modelUpdate.value = vehicle.value.model.id
   groupUpdate.value = vehicle.value.vhicleGroup.id
+  locationUpdate.value = vehicle.value.homeLocation?.id ?? null
   isVehicleDialogDrawer.value = true
 }
 
@@ -1058,21 +1061,27 @@ if (mileageUpdate.value !== vehicle.value.mileage) {
 }
 
 if (typeUpdate.value !== vehicle.value.vehicleType.id) {
-  vehicleData.vehicleType = typeUpdate.value;
+  vehicleData.vehicleTypeId = typeUpdate.value;
 }
 if (modelUpdate.value !== vehicle.value.model.id) {
-  vehicleData.model = modelUpdate.value;
+  vehicleData.modelId = modelUpdate.value;
 }
 if (groupUpdate.value !== vehicle.value.vhicleGroup.id) {
-  vehicleData.vhicleGroup = groupUpdate.value ?? 1;
-
+  vehicleData.vehicleGroupId = groupUpdate.value ?? 1;
 }
 
-// If no values have changed, exit the function
+if (locationUpdate.value !== (vehicle.value.homeLocation?.id ?? null)) {
+  vehicleData.homeLocationId = locationUpdate.value;
+}
+
+
+// If no values have changed, exit the function 
 if (Object.keys(vehicleData).length === 0) {
   isVehicleDialogDrawer.value = false;
+
   return;
 }
+
 
 try {
   const response = await api.put(
@@ -1085,6 +1094,8 @@ try {
       },
     }
   );
+
+
 
   Swal.fire({
     icon: "success",
@@ -2442,6 +2453,19 @@ onMounted(() => {
                     :items="vehicleGroups"
                   />
                 </VCol>
+
+                <!-- 👉 Home Location -->
+                <VCol cols="12">
+                  <AppSelect
+                    v-model="locationUpdate"
+                    label="Select Location"
+                    placeholder="Select Location"
+                    :items="vehicleLocations"
+                  />
+                </VCol>
+
+
+                
 
 
 

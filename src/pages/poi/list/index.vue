@@ -937,7 +937,7 @@ if(result.isConfirmed) {
           border
         >
         <VTab> <VIcon start icon="tabler-map-pin"/>POI</VTab>
-        <VTab> <VIcon start icon="tabler-brand-google-maps"/>Types</VTab>
+        <VTab> <VIcon start icon="tabler-puzzle"/>Types</VTab>
         <VTab><VIcon start icon="tabler-sitemap"/>Groups</VTab>
         </VTabs>
       </div>
