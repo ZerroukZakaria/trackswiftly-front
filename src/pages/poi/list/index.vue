@@ -91,6 +91,13 @@ const groupNameUpdate = ref('')
 const groupDescriptionUpdate = ref('')
 
 
+const isEditGroupModal = ref(false);
+const isEditTypeModal= ref(false);
+
+const Type = ref();
+const Group = ref();
+
+
 
 const poiGroups = ref([]);
 const poiTypes = ref([]);
@@ -103,6 +110,8 @@ const totalTypes = ref(0);
 
 const isAddGroupModal = ref(false);
 const isAddTypeModal= ref(false);
+
+
 
 
 const searchQuery = ref('')
@@ -378,6 +387,175 @@ const submitAddPoiGroup = async() => {
 
 }
 
+const getType = async(id: number) => {
+  try {
+    const response = await api.get(`${API_URL}/gw-client/types/${id}`, {
+      headers: {
+        'Accept': '*/*',
+      }
+    });
+
+    Type.value = response.data[0]
+
+    return Type.value;    
+
+  } catch (error) {
+    console.error("Error fetching type:", error.response?.data || error.message);
+  }
+}
+
+const getGroup = async(id: number) => {
+  try {
+    const response = await api.get(`${API_URL}/gw-client/groups/${id}`, {
+      headers: {
+        'Accept': '*/*',
+      }
+    });
+
+    Group.value = response.data[0]
+
+    return Group.value;    
+
+
+
+  } catch (error) {
+    console.error("Error fetching group:", error.response?.data || error.message);
+
+
+  }
+}
+
+const openTypeModal = async (id: number) => {
+  console.log('Fetching type:', id)
+  await getType(id)
+  typeNameUpdate.value = Type.value.name
+  typeDescriptionUpdate.value = Type.value.description
+  isEditTypeModal.value = true
+
+
+  
+  
+}
+
+const updateType = async () => {
+  let typeData = {};
+
+  // Only include changed values
+  if (typeNameUpdate.value !== Type.value.name) {
+    typeData.name = typeNameUpdate.value;
+  }
+
+  if (typeDescriptionUpdate.value !== Type.value.description) {
+    typeData.description = typeDescriptionUpdate.value;
+  }
+
+  // If no values have changed, exit the function
+  if (Object.keys(typeData).length === 0) {
+    isEditTypeModal.value = false;
+    return;
+  }
+
+  try {
+    const response = await api.put(
+      `${API_URL}/gw-client/types/${Type.value.id}`,
+      typeData,
+      {
+        headers: {
+          "Accept": "*/*",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    Swal.fire({
+      icon: "success",
+      title: "Success!",
+      text: "Type updated successfully.",
+    });
+
+    isEditTypeModal.value = false;
+  } catch (error) {
+    console.error("Error updating type:", error.response?.data || error.message);
+  }
+};
+
+const submitUpdateType = async() => {
+
+  const { valid } = await refTypeUpdateForm.value?.validate();
+  if (valid) {
+    await updateType();
+    getTypes();
+    
+  } else {
+    console.log("Form is not valid");
+  }
+}
+
+
+const openGroupModal = async (id: number) => {
+  console.log('Fetching group id:', id)
+  await getGroup(id)
+  groupNameUpdate.value = Group.value.name
+  groupDescriptionUpdate.value = Group.value.description
+  isEditGroupModal.value = true
+
+}
+
+const updateGroup = async () => {
+  let groupData = {};
+
+  if (groupNameUpdate.value !== Group.value.name) {
+    groupData.name = groupNameUpdate.value;
+  }
+
+  if (groupDescriptionUpdate.value !== Group.value.description) {
+    groupData.description = groupDescriptionUpdate.value;
+  }
+
+  if (Object.keys(groupData).length === 0) {
+    isEditGroupModal.value = false;
+    return;
+  }
+
+
+  try {
+    const response = await api.put(
+      `${API_URL}/gw-client/groups/${Group.value.id}`,
+      groupData,
+      {
+        headers: {
+          "Accept": "*/*",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    Swal.fire({
+      icon: "success",
+      title: "Success!",
+      text: "Group updated successfully.",
+    });
+
+    isEditGroupModal.value = false;
+  } catch (error) {
+    console.error("Error updating type:", error.response?.data || error.message);
+  }
+}
+
+const submitUpdateGroup = async() => {
+
+  const { valid } = await refGroupUpdateForm.value?.validate();
+  if (valid) {
+    await updateGroup();
+    getGroups();
+    
+  } else {
+    console.log("Form is not valid");
+  }
+}
+
+
+
 
 const deletePoi = async (id: number) => {
 
@@ -538,6 +716,113 @@ if(result.isConfirmed) {
 
     <!-- 👉 Dialogs-->
 
+
+
+         <!-- 👉 Edit type-->
+
+       <VDialog persistent v-model="isEditTypeModal"
+        max-width="600"
+        >
+
+        <DialogCloseBtn @click="isEditTypeModal = !isEditTypeModal" />
+
+          <!-- Dialog Content -->
+          <VCard title="Update Type">
+            <VCardText>
+              <VForm ref="refTypeUpdateForm" v-model="isUpdateGroupFormValid">
+                <VRow>
+                  <VCol cols="12">
+                    <AppTextField
+                      v-model="typeNameUpdate"
+                      label="Name"
+                      placeholder="Name"
+                      :rules = "[requiredValidator, alphaValidator]"
+                    />
+                  </VCol>
+                  <VCol cols="12">
+                    <AppTextarea
+                     v-model="typeDescriptionUpdate"
+                      label="Description"
+                      auto-grow
+                      clearable
+                      clear-icon="tabler-circle-x"
+                      counter
+                      :rules = "[alphaWithSpacesValidator]"
+                      />
+                  </VCol>
+                </VRow>
+              </VForm>
+            </VCardText>
+
+            <VCardText class="d-flex justify-end flex-wrap gap-3">
+              <VBtn
+                variant="tonal"
+                color="secondary"
+                @click="isEditTypeModal = false"
+              >
+                Close
+              </VBtn>
+              <VBtn @click="submitUpdateType">
+                Update
+              </VBtn>
+            </VCardText>
+          </VCard>
+        
+        </VDialog>
+
+
+        <!-- 👉 Edit Group-->
+
+        <VDialog persistent v-model="isEditGroupModal"
+        max-width="600"
+        >
+
+        <DialogCloseBtn @click="isEditGroupModal = !isEditGroupModal" />
+
+          <!-- Dialog Content -->
+          <VCard title="Update Group">
+            <VCardText>
+              <VForm ref="refGroupUpdateForm" v-model="isUpdateTypeFormValid">
+                <VRow>
+                  <VCol cols="12">
+                    <AppTextField
+                      v-model="groupNameUpdate"
+                      label="Name"
+                      placeholder="Name"
+                      :rules = "[requiredValidator, alphaValidator]"
+                    />
+                  </VCol>
+                  <VCol cols="12">
+                    <AppTextarea
+                     v-model="groupDescriptionUpdate"
+                      label="Description"
+                      auto-grow
+                      clearable
+                      clear-icon="tabler-circle-x"
+                      counter
+                      :rules = "[alphaWithSpacesValidator]"
+                      />
+                  </VCol>
+                </VRow>
+              </VForm>
+            </VCardText>
+
+            <VCardText class="d-flex justify-end flex-wrap gap-3">
+              <VBtn
+                variant="tonal"
+                color="secondary"
+                @click="isEditGroupModal = false"
+              >
+                Close
+              </VBtn>
+              <VBtn @click="submitUpdateGroup">
+                Update
+              </VBtn>
+            </VCardText>
+          </VCard>
+        
+        </VDialog>
+
     
       <!-- 👉 Add new type-->
 
@@ -591,7 +876,7 @@ if(result.isConfirmed) {
         
       </VDialog>
 
-            <!-- 👉 Add new group-->
+      <!-- 👉 Add new group-->
 
       <VDialog persistent v-model="isAddGroupModal"
       max-width="600"
@@ -642,6 +927,9 @@ if(result.isConfirmed) {
           </VCard>
         
       </VDialog>
+
+
+
 
 
   
@@ -931,8 +1219,8 @@ if(result.isConfirmed) {
           <template #item.actions="{ item }">
 
 
-                      <!-- edit user role -->
-          <IconBtn @click="openVehicleDrawer(item.id)">
+          <!-- edit user role -->
+          <IconBtn @click="openTypeModal(item.id)">
             <VIcon icon="tabler-edit" />
           </IconBtn>
 
