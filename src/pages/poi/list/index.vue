@@ -63,6 +63,35 @@ const latitude = ref(0)
 const payload = ('')
 
 
+
+//Add Group refs
+const isAddGroupFormValid = ref(false)
+const refGroupForm = ref<VForm>()
+const groupName = ref('')
+const groupDescription = ref('')
+
+
+//Add Type refs
+const isAddTypeFormValid = ref(false)
+const refTypeForm = ref<VForm>();
+const typeName = ref('')
+const typeDescription = ref('')
+
+//Edit Type refs
+const isUpdateTypeFormValid = ref(false)
+const refTypeUpdateForm = ref<VForm>()
+const typeNameUpdate = ref('')
+const typeDescriptionUpdate = ref('')
+
+
+//Edit group refs
+const isUpdateGroupFormValid = ref(false)
+const refGroupUpdateForm = ref<VForm>()
+const groupNameUpdate = ref('')
+const groupDescriptionUpdate = ref('')
+
+
+
 const poiGroups = ref([]);
 const poiTypes = ref([]);
 
@@ -70,6 +99,10 @@ const groups = ref([]);
 const types = ref([]);
 const totalGroups = ref(0);
 const totalTypes = ref(0);
+
+
+const isAddGroupModal = ref(false);
+const isAddTypeModal= ref(false);
 
 
 const searchQuery = ref('')
@@ -131,8 +164,6 @@ const getTypes = async () => {
     types.value = response.data.content
     totalTypes.value = response.data.totalElements || 0;
 
-    console.log(types.value);
-
     return response.data.content
   } catch (error) {
     console.error("Error fetching types:", error.response?.data || error.message);
@@ -149,8 +180,6 @@ const getGroups= async () => {
 
     groups.value = response.data.content
     totalGroups.value = response.data.totalElements || 0;
-
-    console.log(groups.value);
 
     return response.data.content
   } catch (error) {
@@ -195,7 +224,6 @@ const openAddPoiDrawer = async() => {
   populatePoiTG();
   isAddPoiDrawer.value = true 
 }
-
 
 const savePoi = async() => {
   try {
@@ -245,6 +273,110 @@ const onSubmit = async () => {
     console.log("Form is not valid");
   }
 };
+
+
+const addPoiType = async () => {
+
+try {
+
+  let typeData = {
+    name: typeName.value,
+    ...(typeDescription.value ? { description: typeDescription.value } : {})
+  };
+
+
+const response = await api.post(`${API_URL}/gw-client/types`, [typeData], {
+    headers: {
+      'Accept': '*/*',
+      'Content-Type': 'application/json'
+    }
+  });
+
+
+Swal.fire({
+    icon: "success",
+    title: "Success!",
+    text: `Type added successfully.`,
+  });
+
+
+  
+  
+  isAddTypeModal.value = false;
+  typeName.value = '';
+  typeDescription.value = '';
+
+} catch (error) {
+  console.error('Error saving type:', error.response?.data || error.message);
+
+}
+
+}
+
+const submitAddPoiType = async() => {
+  const { valid } = await refTypeForm.value?.validate();
+
+  if (valid) {
+    await addPoiType();
+    getTypes();
+
+  } else {
+    console.log("Form is not valid");
+  }
+}
+
+
+const addPoiGroup = async () => {
+
+try {
+  let groupData = {
+  name: groupName.value,
+  ...(groupDescription.value ? { description: groupDescription.value } : {})
+
+ };
+
+
+
+const response = await api.post(`${API_URL}/gw-client/groups`, [groupData], {
+    headers: {
+      'Accept': '*/*',
+      'Content-Type': 'application/json'
+    }
+  });
+
+
+
+Swal.fire({
+    icon: "success",
+    title: "Success!",
+    text: `Group added successfully.`,
+  });
+
+  
+  isAddGroupModal.value = false
+  groupName.value = '';
+  groupDescription.value = '';
+
+} catch (error) {
+  console.error('Error saving group:', error.response?.data || error.message);
+
+}
+
+
+}
+
+const submitAddPoiGroup = async() => {
+  const { valid } = await refGroupForm.value?.validate();
+
+  if (valid) {
+    await addPoiGroup();
+    getGroups();
+
+  } else {
+    console.log("Form is not valid");
+  }
+
+}
 
 
 const deletePoi = async (id: number) => {
@@ -403,6 +535,115 @@ if(result.isConfirmed) {
 </script>
 
 <template>
+
+    <!-- 👉 Dialogs-->
+
+    
+      <!-- 👉 Add new type-->
+
+      <VDialog persistent v-model="isAddTypeModal"
+      max-width="600"
+      >
+
+      <DialogCloseBtn @click="isAddTypeModal = !isAddTypeModal" />
+
+          <!-- Dialog Content -->
+          <VCard title="Add Type">
+            <VCardText>
+              <VForm ref="refTypeForm" v-model="isAddTypeFormValid">
+                <VRow>
+                  <VCol cols="12">
+                    <AppTextField
+                      v-model="typeName"
+                      label="Name"
+                      placeholder="Name"
+                      :rules = "[requiredValidator, alphaValidator]"
+                    />
+                  </VCol>
+                  <VCol cols="12">
+                    <AppTextarea
+                     v-model="typeDescription"
+                      label="Description"
+                      auto-grow
+                      clearable
+                      clear-icon="tabler-circle-x"
+                      counter
+                      :rules = "[alphaWithSpacesValidator]"
+                      />
+                  </VCol>
+                </VRow>
+              </VForm>
+            </VCardText>
+
+            <VCardText class="d-flex justify-end flex-wrap gap-3">
+              <VBtn
+                variant="tonal"
+                color="secondary"
+                @click="isAddTypeModal = false"
+              >
+                Close
+              </VBtn>
+              <VBtn @click="submitAddPoiType">
+                Submit
+              </VBtn>
+            </VCardText>
+          </VCard>
+        
+      </VDialog>
+
+            <!-- 👉 Add new group-->
+
+      <VDialog persistent v-model="isAddGroupModal"
+      max-width="600"
+      >
+
+      <DialogCloseBtn @click="isAddGroupModal = !isAddGroupModal" />
+
+          <!-- Dialog Content -->
+          <VCard title="Add Group">
+            <VCardText>
+              <VForm ref="refGroupForm" v-model="isAddGroupFormValid" >
+                <VRow>
+                  <VCol cols="12">
+                    <AppTextField
+                      v-model="groupName"
+                      label="Name"
+                      placeholder="Name"
+                      :rules = "[requiredValidator, alphaValidator]"
+                    />
+                  </VCol>
+                  <VCol cols="12">
+                    <AppTextarea
+                     v-model="groupDescription"
+                      label="Description"
+                      auto-grow
+                      clearable
+                      clear-icon="tabler-circle-x"
+                      counter
+                      :rules = "[alphaWithSpacesValidator]"
+                      />
+                  </VCol>
+                </VRow>
+              </VForm>
+            </VCardText>
+
+            <VCardText class="d-flex justify-end flex-wrap gap-3">
+              <VBtn
+                variant="tonal"
+                color="secondary"
+                @click="isAddGroupModal = false"
+              >
+                Close
+              </VBtn>
+              <VBtn @click="submitAddPoiGroup">
+                Submit
+              </VBtn>
+            </VCardText>
+          </VCard>
+        
+      </VDialog>
+
+
   
     <!-- 👉 Tabs headers-->
 
@@ -629,7 +870,7 @@ if(result.isConfirmed) {
           <!-- 👉 Add Type button -->
           <VBtn
             prepend-icon="tabler-category-plus"
-            @click="openAddPoiDrawer"
+            @click="isAddTypeModal = true"
           >
           Add Type
         </VBtn>
@@ -774,7 +1015,7 @@ if(result.isConfirmed) {
             </div>
           </div>
 
-          <!-- 👉 Add Vehicle button -->
+          <!-- 👉 Add Group button -->
           <VBtn
             prepend-icon="tabler-category-plus"
             @click="isAddGroupModal = true"
@@ -829,7 +1070,7 @@ if(result.isConfirmed) {
           <template #item.description="{ item }">
             <div class="d-flex align-center gap-4">
 
-              <span>{{ item.description }} km</span>
+              <span>{{ item.description }}</span>
             </div>
           </template>
 
