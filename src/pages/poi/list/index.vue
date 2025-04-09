@@ -60,7 +60,7 @@ const type = ref()
 const address = ref('')
 const longitude = ref(0)
 const latitude = ref(0)
-const payload = ('')
+const payloadFields = ref([{ key: '', value: '' }])
 
 
 
@@ -237,36 +237,51 @@ const openAddPoiDrawer = async() => {
 const savePoi = async() => {
   try {
 
-  const poiData = {
-    name: name.value,
-    groupId: group.value ?? 1,
-    typeId: type.value,
-    address: address.value, 
-    latitude: Number(latitude.value), 
-    longitude: Number(longitude.value),
-    //payload
-  };
+    const payload = {}
+    payloadFields.value.forEach(({ key, value }) => {
+      if (key && value !== '') {
+        payload[key] = value
+      }
+    })
+
+    const poiData = {
+      name: name.value,
+      groupId: group.value ?? 1,
+      typeId: type.value,
+      ...(address.value ? { address: address.value } : {}),
+      ...(longitude.value ? { longitude: longitude.value } : {}),
+      ...(latitude.value ? { latitude: latitude.value } : {}),
+      ...(Object.keys(payload).length ? { payload } : {}), // ✅ conditionally add payload
+    }
+
+  
+
+
+  console.log(poiData)
+
+
+
 
 
 
   // Send the API request
-  const response = await api.post(`${API_URL}/gw-client/pois`, [poiData], {
-    headers: {
-      'Accept': '*/*',
-      'Content-Type': 'application/json'
-    }
-  });
+  // const response = await api.post(`${API_URL}/gw-client/pois`, [poiData], {
+  //   headers: {
+  //     'Accept': '*/*',
+  //     'Content-Type': 'application/json'
+  //   }
+  // });
 
 
-  Swal.fire({
-      icon: "success",
-      title: "Success!",
-      text: `POI added successfully.`,
-  });
+  // Swal.fire({
+  //     icon: "success",
+  //     title: "Success!",
+  //     text: `POI added successfully.`,
+  // });
 
-  isAddPoiDrawer.value = false;
+  // isAddPoiDrawer.value = false;
 
-  console.log('POI saved successfully:', response.data);
+  // console.log('POI saved successfully:', response.data);
   } catch (error) {
   console.error('Error saving POI:', error.response?.data || error.message);
   }
@@ -698,6 +713,15 @@ if(result.isConfirmed) {
 
 }
 
+const addPayloadField = () => {
+  payloadFields.value.push({ key: '', value: '' })
+
+}
+
+const removePayloadField = (index: number) => {
+  payloadFields.value.splice(index, 1)
+
+}
 
 
 
@@ -922,6 +946,99 @@ if(result.isConfirmed) {
         
       </VDialog>
 
+      <!-- 👉 Add new POI-->
+
+      <VDialog persistent v-model="isAddPoiDrawer"
+      max-width="800"
+      >
+
+      <DialogCloseBtn @click="isAddPoiDrawer = !isAddPoiDrawer" />
+
+          <!-- Dialog Content -->
+          <VCard title="Add POI">
+            <VCardText>
+              <VForm ref="refForm" v-model="isFormValid" >
+                <VRow>
+                  <VCol cols="12" sm="6" md="4">
+                    <AppTextField
+                      v-model="name"
+                      label="Name"
+                      placeholder="Name"
+                      :rules = "[requiredValidator, nameValidator]"
+                    />
+                  </VCol>
+                  <VCol cols="12" sm="6" md="4">
+                    <AppSelect
+                      v-model="type"
+                      label="Type"
+                      placeholder="Type"
+                      :rules = "[requiredValidator]"
+                      :items = "poiTypes"
+
+                    />
+                  </VCol>
+                  <VCol cols="12" sm="6" md="4">
+                    <AppSelect
+                      v-model="group"
+                      label="Group"
+                      placeholder="Group"
+                      :rules = "[requiredValidator]"
+                      :items="poiGroups"
+                    />
+                  </VCol>
+
+
+                  <VCol cols="12">
+                    <div v-for="(field, index) in payloadFields" :key="index" class="d-flex align-center mb-2 gap-2">
+                      <AppTextField
+                        v-model="field.key"
+                        label="Key"
+                        placeholder="Enter key"
+                        dense
+                      />
+                      <AppTextField
+                        v-model="field.value"
+                        label="Value"
+                        placeholder="Enter value"
+                        dense
+                      />
+                    <IconBtn @click="addPayloadField" class="mt-5" > 
+                      <VIcon icon="tabler-hexagon-plus" />
+                    </IconBtn>
+                      <IconBtn @click="removePayloadField(index)" class="mt-5">
+                        <VIcon icon="tabler-hexagon-minus" />
+                      </IconBtn>
+                      
+                    </div>
+
+
+                    
+                  </VCol>
+
+                </VRow>
+              </VForm>
+            </VCardText>
+
+            <VCardText class="d-flex justify-end flex-wrap gap-3">
+              <VBtn
+                variant="tonal"
+                color="secondary"
+                @click="isAddPoiDrawer = false"
+              >
+                Close
+              </VBtn>
+              <VBtn @click="onSubmit">
+                Submit
+              </VBtn>
+            </VCardText>
+          </VCard>
+        
+      </VDialog>
+
+
+
+      
+
 
 
 
@@ -979,7 +1096,7 @@ if(result.isConfirmed) {
             prepend-icon="tabler-category-plus"
             @click="openAddPoiDrawer"
           >
-          Add Vehicle
+          Add POI
         </VBtn>
 
         </VCardText>
