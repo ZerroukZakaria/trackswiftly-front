@@ -79,7 +79,6 @@ declare global {
   const kFormatter: typeof import('./src/@core/utils/formatters')['kFormatter']
   const keycloak: typeof import('./src/utils/types')['keycloak']
   const lengthValidator: typeof import('./src/@core/utils/validators')['lengthValidator']
-  const nameValidator: typeof import('./src/@core/utils/validators')['nameValidator']
   const logicAnd: typeof import('@vueuse/math')['logicAnd']
   const logicNot: typeof import('@vueuse/math')['logicNot']
   const logicOr: typeof import('@vueuse/math')['logicOr']
