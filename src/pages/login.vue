@@ -51,7 +51,7 @@ const onSubmit = async () => {
   const result = await refVForm.value?.validate();
 
   if (result?.valid) {
-    await loginWithIframe();
+    await loginWithKeycloakOld();
 
 
   }

@@ -734,8 +734,6 @@ const removePayloadField = (index: number) => {
 
     <!-- 👉 Dialogs-->
 
-
-
          <!-- 👉 Edit type-->
 
        <VDialog persistent v-model="isEditTypeModal"
@@ -1008,11 +1006,7 @@ const removePayloadField = (index: number) => {
                       <IconBtn @click="removePayloadField(index)" class="mt-5">
                         <VIcon icon="tabler-hexagon-minus" />
                       </IconBtn>
-                      
                     </div>
-
-
-                    
                   </VCol>
 
                 </VRow>
@@ -1034,15 +1028,6 @@ const removePayloadField = (index: number) => {
           </VCard>
         
       </VDialog>
-
-
-
-      
-
-
-
-
-
   
     <!-- 👉 Tabs headers-->
 
