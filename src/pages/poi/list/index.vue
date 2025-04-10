@@ -232,6 +232,11 @@ const populatePoiTG = async() => {
 const openAddPoiDrawer = async() => {
   populatePoiTG();
   isAddPoiDrawer.value = true 
+
+  nextTick(() => {
+    initMap('mapContainer');
+
+  });
 }
 
 const savePoi = async() => {
@@ -244,6 +249,12 @@ const savePoi = async() => {
       }
     })
 
+
+    if (latitude.value && longitude.value) {
+      address.value = await getAddress(latitude.value, longitude.value)
+    }
+
+
     const poiData = {
       name: name.value,
       groupId: group.value ?? 1,
@@ -254,34 +265,24 @@ const savePoi = async() => {
       ...(Object.keys(payload).length ? { payload } : {}), // ✅ conditionally add payload
     }
 
-  
+
+  const response = await api.post(`${API_URL}/gw-client/pois`, [poiData], {
+    headers: {
+      'Accept': '*/*',
+      'Content-Type': 'application/json'
+    }
+  });
 
 
-  console.log(poiData)
+  Swal.fire({
+      icon: "success",
+      title: "Success!",
+      text: `POI added successfully.`,
+  });
 
+  isAddPoiDrawer.value = false;
 
-
-
-
-
-  // Send the API request
-  // const response = await api.post(`${API_URL}/gw-client/pois`, [poiData], {
-  //   headers: {
-  //     'Accept': '*/*',
-  //     'Content-Type': 'application/json'
-  //   }
-  // });
-
-
-  // Swal.fire({
-  //     icon: "success",
-  //     title: "Success!",
-  //     text: `POI added successfully.`,
-  // });
-
-  // isAddPoiDrawer.value = false;
-
-  // console.log('POI saved successfully:', response.data);
+  console.log('POI saved successfully:', response.data);
   } catch (error) {
   console.error('Error saving POI:', error.response?.data || error.message);
   }
@@ -348,7 +349,6 @@ const submitAddPoiType = async() => {
     console.log("Form is not valid");
   }
 }
-
 
 const addPoiGroup = async () => {
 
@@ -505,7 +505,6 @@ const submitUpdateType = async() => {
     console.log("Form is not valid");
   }
 }
-
 
 const openGroupModal = async (id: number) => {
   console.log('Fetching group id:', id)
@@ -719,9 +718,206 @@ const addPayloadField = () => {
 }
 
 const removePayloadField = (index: number) => {
-  payloadFields.value.splice(index, 1)
-
+  if (index > 0) {
+    payloadFields.value.splice(index, 1)
+  }
 }
+
+
+let currentMarker: mapboxgl.Marker | null = null; 
+let mapInstance: mapboxgl.Map | null = null; 
+
+let mapInstanceUpdate: mapboxgl.Map | null = null;
+
+const initMap = (mapContainer: string) => {
+  // Check if the map already exists and remove it before reinitializing
+  if (mapInstance) {
+    mapInstance.remove(); // Destroy the existing map instance
+  }
+
+  mapboxgl.accessToken = mapboxToken;
+
+  mapInstance = new mapboxgl.Map({
+    container: mapContainer,
+    style: 'mapbox://styles/mapbox/dark-v10',
+    center: [-6.8498, 33.9716], 
+    zoom: 5, 
+    renderWorldCopies: false 
+  });
+
+  mapInstance.on('load', () => {
+    hideAttributionControl();
+    mapInstance.resize();
+  });
+
+
+  mapInstance.addControl(
+    new MapboxGeocoder({
+        accessToken: mapboxgl.accessToken,
+        mapboxgl: mapboxgl,
+        marker: false
+
+    }), 'top-right'
+  );
+
+
+  mapInstance.addControl(new mapboxgl.FullscreenControl(), 'top-left');
+  mapInstance.addControl(new mapboxgl.NavigationControl(), 'top-left');
+
+
+
+
+  mapInstance.on("style.load", function () {
+    function applyWorldviewFilters() {
+        const WORLD_VIEW = "MA";
+        var adminLayers = ["admin-0-boundary", "admin-1-boundary", "admin-0-boundary-disputed", "admin-1-boundary-bg", "admin-0-boundary-bg", "country-label"];
+        adminLayers.forEach((adminLayer) => {
+            if (mapInstance.getLayer(adminLayer)) {
+                mapInstance.setFilter(adminLayer, ["match", ["get", "worldview"], ["all", WORLD_VIEW], true, false]);
+            }
+        });
+    }
+
+    applyWorldviewFilters();
+  });
+
+
+  // Add click event to get lat/lng and place a marker
+  mapInstance.on('click', (event) => {
+
+    const coordinates = event.lngLat;
+      longitude.value = coordinates.lng;
+      latitude.value = coordinates.lat;
+
+    // If a marker already exists, remove it
+    if (currentMarker) {
+      currentMarker.remove();
+    }
+
+    // Create a new marker and set its position at the clicked coordinates
+    currentMarker = new mapboxgl.Marker({
+        color: "#ff001f",  // Optional: make it more visible
+        draggable: false   // Optional: prevent accidental movement
+      })
+      .setLngLat(coordinates)
+      .addTo(mapInstance);
+  });
+};
+
+const initMapUpdate = (lat: number, long: number) => {
+
+if (mapInstanceUpdate) {
+mapInstanceUpdate.remove(); 
+}
+
+mapboxgl.accessToken = 'pk.eyJ1Ijoic2FhZG92c2t5IiwiYSI6ImNsZ3VxeDJ0bTBvMDYzZm81cWd2YWpkNTEifQ.rT0oeL7LOwbvkPYCFSVFWQ';
+
+mapInstanceUpdate = new mapboxgl.Map({
+container: 'mapContainerUpdate',
+style: 'mapbox://styles/mapbox/dark-v10',
+center: [lat, long], 
+zoom: 5, 
+renderWorldCopies: false 
+});
+
+mapInstanceUpdate.on('load', () => {
+hideAttributionControl();
+mapInstanceUpdate.resize();
+
+
+currentMarker = new mapboxgl.Marker({
+        color: "#ff001f",  // Optional: make it more visible
+        draggable: true    // Make the marker draggable
+    })
+    .setLngLat([lat, long])  // Set the initial position using the provided lat/lon
+    .addTo(mapInstanceUpdate);
+
+
+    mapInstanceUpdate.flyTo({
+        center: [lat, long],   // Center the map at the marker
+        zoom: 12,              // Set the zoom level (you can change this value)
+        essential: true        // Ensures the animation is performed
+    });
+
+});
+
+
+
+mapInstanceUpdate.addControl(
+new MapboxGeocoder({
+    accessToken: mapboxgl.accessToken,
+    mapboxgl: mapboxgl,
+    marker: false
+
+}), 'top-right'
+);
+
+
+
+mapInstanceUpdate.addControl(new mapboxgl.FullscreenControl(), 'top-left');
+mapInstanceUpdate.addControl(new mapboxgl.NavigationControl(), 'top-left');
+
+
+
+mapInstanceUpdate.on("style.load", function () {
+function applyWorldviewFilters() {
+    const WORLD_VIEW = "MA";
+    var adminLayers = ["admin-0-boundary", "admin-1-boundary", "admin-0-boundary-disputed", "admin-1-boundary-bg", "admin-0-boundary-bg", "country-label"];
+    adminLayers.forEach((adminLayer) => {
+        if (mapInstanceUpdate.getLayer(adminLayer)) {
+            mapInstanceUpdate.setFilter(adminLayer, ["match", ["get", "worldview"], ["all", WORLD_VIEW], true, false]);
+        }
+    });
+}
+
+applyWorldviewFilters();
+});
+
+
+
+
+
+// Add click event to get lat/lng and place a marker
+mapInstanceUpdate.on('click', (event) => {
+
+const coordinates = event.lngLat;
+locationUpdateLong.value = coordinates.lng;
+locationUpdateLat.value = coordinates.lat;
+
+console.log('Clicked coordinates:', coordinates.lng, coordinates.lat);
+
+// If a marker already exists, remove it
+if (currentMarker) {
+  currentMarker.remove();
+}
+
+// Create a new marker and set its position at the clicked coordinates
+currentMarker = new mapboxgl.Marker({
+    color: "#ff001f",  // Optional: make it more visible
+    draggable: false   // Optional: prevent accidental movement
+  })
+  .setLngLat(coordinates)
+  .addTo(mapInstanceUpdate);
+});
+}
+
+const hideAttributionControl = () => {
+  const attributionControl = document.querySelector('.mapboxgl-ctrl-attrib');
+  if (attributionControl) {
+    attributionControl.style.display = 'none';
+  }
+};
+
+const getAddress = async (lat:number, lon:number) => {
+  try {
+    const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${lon},${lat}.json?access_token=${mapboxToken}`);
+    const data = await response.json();
+    return data.features[0]?.place_name || "";
+  } catch (err) {
+    console.error("Error reverse geocoding:", err);
+    return "Error fetching address";
+  }
+};
 
 
 
@@ -957,6 +1153,14 @@ const removePayloadField = (index: number) => {
             <VCardText>
               <VForm ref="refForm" v-model="isFormValid" >
                 <VRow>
+                  <VCol cols="12">
+                      <div id="" class="map-container">
+                        <div id="mapContainer" style="height: 500px; width: 100%; border-radius: 8px;"></div>
+                      </div>
+
+                  </VCol>
+
+
                   <VCol cols="12" sm="6" md="4">
                     <AppTextField
                       v-model="name"
@@ -1003,7 +1207,7 @@ const removePayloadField = (index: number) => {
                     <IconBtn @click="addPayloadField" class="mt-5" > 
                       <VIcon icon="tabler-hexagon-plus" />
                     </IconBtn>
-                      <IconBtn @click="removePayloadField(index)" class="mt-5">
+                      <IconBtn  @click="removePayloadField(index)" class="mt-5">
                         <VIcon icon="tabler-hexagon-minus" />
                       </IconBtn>
                     </div>
@@ -1076,7 +1280,7 @@ const removePayloadField = (index: number) => {
             </div>
           </div>
 
-          <!-- 👉 Add Vehicle button -->
+          <!-- 👉 Add POI button -->
           <VBtn
             prepend-icon="tabler-category-plus"
             @click="openAddPoiDrawer"
@@ -1528,3 +1732,41 @@ const removePayloadField = (index: number) => {
 
 
 </template>
+
+<style scoped>
+.custom-tabs {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 5px;
+}
+
+.map-container {
+  height: 300px;
+  width: 100%;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.map-dialog .mapboxgl-canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.v-dialog--active #mapContainer {
+  height: 300px !important;
+  width: 100% !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.v-dialog--active #mapContainerUpdate {
+  height: 300px !important;
+  width: 100% !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+
+</style>
+
