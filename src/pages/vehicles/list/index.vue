@@ -3372,13 +3372,7 @@ onMounted(() => {
   padding: 5px;
 }
 
-.map-container {
-  height: 300px;
-  width: 100%;
-  border-radius: 8px;
-  position: relative;
-  overflow: hidden;
-}
+
 
 .map-dialog .mapboxgl-canvas {
   width: 100% !important;
