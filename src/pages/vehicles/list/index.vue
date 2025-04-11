@@ -362,6 +362,15 @@ const saveVehicle = async () => {
      });
 
      isAddVehicleDrawer.value = false;
+     vin.value = '';
+     licensePlate.value = '';
+     mileage.value = '';
+     purchaseDate.value = '';
+     type.value = '';
+     model.value = '';
+     group.value = '';
+     location.value = '';
+
 
     console.log('Vehicle saved successfully:', response.data);
   } catch (error) {
