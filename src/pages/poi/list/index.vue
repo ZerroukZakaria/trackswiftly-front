@@ -281,6 +281,16 @@ const savePoi = async() => {
   });
 
   isAddPoiDrawer.value = false;
+  name.value = '';
+  group.value = '';
+  type.value = '';
+  address.value = '';
+  longitude.value = 0;
+  latitude.value = 0;
+  payloadFields.value = [{ key: '', value: '' }];
+
+  
+
 
   console.log('POI saved successfully:', response.data);
   } catch (error) {
@@ -918,10 +928,6 @@ const getAddress = async (lat:number, lon:number) => {
     return "Error fetching address";
   }
 };
-
-
-
-
 
 
 </script>
