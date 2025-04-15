@@ -304,6 +304,75 @@ const openAddPoiDrawer = async() => {
 const updatePoi = async() => {
   let poiData = {}
 
+  if (nameUpdate.value !== poi.value.name) {
+  poiData.name = nameUpdate.value;
+  }
+
+  if (groupUpdate.value !== poi.value.group.id) {
+  poiData.groupId = groupUpdate.value;
+  }
+
+  if (typeUpdate.value !== poi.value.poiTypeResponse.id) {
+  poiData.typeId = typeUpdate.value;
+  }
+
+  if (longitudeUpdate.value !== poi.value.longitude) {
+  poiData.longitude = longitudeUpdate.value;
+  }
+  if (latitudeUpdate.value !== poi.value.latitude) {
+  poiData.latitude = latitudeUpdate.value;
+  }
+
+  if (addressUpdate.value !== poi.value.address) {
+  poiData.address = addressUpdate.value;
+  }
+
+  const updatedPayload = Object.fromEntries(
+    payloadFieldsUpdate.value
+      .filter(({ key, value }) => key && value !== '') // remove empty ones
+      .map(({ key, value }) => [key, value])
+  );
+
+  const originalPayload = poi.value.payload || {};
+  const isPayloadDifferent = JSON.stringify(updatedPayload) !== JSON.stringify(originalPayload);
+
+  if (isPayloadDifferent) {
+    poiData.payload = updatedPayload;
+  }
+
+  console.log(poiData)
+
+
+  if (Object.keys(poiData).length === 0) {
+  isPoiDrawer.value = false;
+  return;
+  }
+
+  try {
+  const response = await api.put(
+    `${API_URL}/gw-client/pois/${poi.value.id}`,
+    poiData,
+    {
+      headers: {
+        "Accept": "*/*",
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+
+
+  Swal.fire({
+    icon: "success",
+    title: "Success!",
+    text: "POI updated successfully.",
+  });
+
+  isPoiDrawer.value = false;
+} catch (error) {
+  console.error("Error updating POI:", error.response?.data || error.message);
+}
+
 
 }
 
