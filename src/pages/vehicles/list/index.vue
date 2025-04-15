@@ -511,18 +511,19 @@ const addVehicleGroup = async () => {
 
 const addVehicleLocation = async() => {
   try {
-    let locationData = {
-    name: locationName.value,
-    latitude: locationLat.value,
-    longitude: locationLong.value
-
-   };
-
 
    if (locationLat.value == 0 && locationLong.value == 0) {
     console.log("Form is not valid");
     return;
    }
+
+
+   let locationData = {
+    name: locationName.value,
+    latitude: locationLat.value,
+    longitude: locationLong.value
+
+   };
   
   const response = await api.post(`${API_URL}/homelocations`, [locationData], {
       headers: {
