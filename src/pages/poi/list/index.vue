@@ -49,7 +49,7 @@ onMounted(() => {
 
 
 
-//Add Vehicle refs
+//Add Pois refs
 const isFormValid = ref(false)
 const refForm = ref<VForm>()
 const isAddPoiDrawer = ref(false)
@@ -61,6 +61,22 @@ const address = ref('')
 const longitude = ref(0)
 const latitude = ref(0)
 const payloadFields = ref([{ key: '', value: '' }])
+
+
+//Update Poi refs
+const isFormUpdateValid = ref(false)
+const refUpdateForm = ref<VForm>()
+const isPoiDrawer = ref(false)
+
+const nameUpdate = ref('')
+const groupUpdate = ref()
+const typeUpdate = ref()
+const addressUpdate = ref('')
+const longitudeUpdate = ref(0)
+const latitudeUpdate = ref(0)
+const payloadFieldsUpdate = ref()
+
+
 
 
 
@@ -215,6 +231,50 @@ const getPois = async () => {
   }
 };
 
+const getPoi = async (id: number) => {
+  try {
+    const response = await api.get(`${API_URL}/gw-client/pois/${id}`, {
+      headers: {
+        'Accept': '*/*',
+      }
+    });
+
+    
+    poi.value = response.data[0]
+    return poi.value
+
+
+  } catch (error) {
+    console.error("Error fetching POIs:", error.response?.data || error.message);
+  }
+};
+
+
+const openPoiDrawer = async(id: number) => {
+  console.log('Fetching poi:', id)
+  await getPoi(id);
+
+  populatePoiTG();
+  console.log(poi.value)
+
+  nameUpdate.value = poi.value.name
+  groupUpdate.value = poi.value.group.id
+  typeUpdate.value = poi.value.poiTypeResponse.id
+  addressUpdate.value = poi.value.address
+  longitudeUpdate.value = poi.value.longitude
+  latitudeUpdate.value = poi.value.latitude
+  payloadFieldsUpdate.value = Object.entries(poi.value.payload || {}).map(([key, value]) => ({ key, value }))
+if (payloadFieldsUpdate.value.length === 0) {
+  payloadFieldsUpdate.value.push({ key: '', value: '' })
+}  isPoiDrawer.value = true 
+
+  nextTick(() => {
+    initMapUpdate(longitudeUpdate.value, latitudeUpdate.value);
+
+  });
+}
+
+
 
 const populatePoiTG = async() => {
   const fetchedGroups = await getGroups();
@@ -229,6 +289,8 @@ const populatePoiTG = async() => {
     }));
 }
 
+
+
 const openAddPoiDrawer = async() => {
   populatePoiTG();
   isAddPoiDrawer.value = true 
@@ -237,6 +299,23 @@ const openAddPoiDrawer = async() => {
     initMap('mapContainer');
 
   });
+}
+
+const updatePoi = async() => {
+  let poiData = {}
+
+
+}
+
+const submitUpdatePoi= async() => {
+  const { valid } = await refUpdateForm.value?.validate();
+  if (valid) {
+    await updatePoi();
+    getPois();
+    
+  } else {
+    console.log("Form is not valid");
+  }
 }
 
 const savePoi = async() => {
@@ -249,19 +328,21 @@ const savePoi = async() => {
       }
     })
 
-
-    if (latitude.value && longitude.value) {
-      address.value = await getAddress(latitude.value, longitude.value)
+    if (latitude.value == 0 && longitude.value == 0) {
+      console.log("Form is not valid");
+      return;    
     }
 
 
+    address.value = await getAddress(latitude.value, longitude.value)
+    
     const poiData = {
       name: name.value,
       groupId: group.value ?? 1,
       typeId: type.value,
-      ...(address.value ? { address: address.value } : {}),
-      ...(longitude.value ? { longitude: longitude.value } : {}),
-      ...(latitude.value ? { latitude: latitude.value } : {}),
+      address: address.value,
+      longitude: longitude.value,
+      latitude: latitude.value,
       ...(Object.keys(payload).length ? { payload } : {}), // ✅ conditionally add payload
     }
 
@@ -359,6 +440,10 @@ const submitAddPoiType = async() => {
     console.log("Form is not valid");
   }
 }
+
+
+
+
 
 const addPoiGroup = async () => {
 
@@ -733,6 +818,17 @@ const removePayloadField = (index: number) => {
   }
 }
 
+const addPayloadFieldUpdate = () => {
+  payloadFieldsUpdate.value.push({ key: '', value: '' })
+
+}
+
+const removePayloadFieldUpdate = (index: number) => {
+  if (index > 0) {
+    payloadFieldsUpdate.value.splice(index, 1)
+  }
+}
+
 
 let currentMarker: mapboxgl.Marker | null = null; 
 let mapInstance: mapboxgl.Map | null = null; 
@@ -891,8 +987,8 @@ applyWorldviewFilters();
 mapInstanceUpdate.on('click', (event) => {
 
 const coordinates = event.lngLat;
-locationUpdateLong.value = coordinates.lng;
-locationUpdateLat.value = coordinates.lat;
+longitudeUpdate.value = coordinates.lng;
+latitudeUpdate.value = coordinates.lat;
 
 console.log('Clicked coordinates:', coordinates.lng, coordinates.lat);
 
@@ -1146,6 +1242,102 @@ const getAddress = async (lat:number, lon:number) => {
         
       </VDialog>
 
+
+     <!-- 👉 Update POI-->
+
+    <VDialog persistent v-model="isPoiDrawer"
+      max-width="800"
+      >
+
+      <DialogCloseBtn @click="isPoiDrawer = !isPoiDrawer" />
+
+          <!-- Dialog Content -->
+          <VCard title="Update POI">
+            <VCardText>
+              <VForm ref="refUpdateForm" v-model="isFormUpdateValid" >
+                <VRow>
+                  <VCol cols="12">
+                      <div id="" class="map-container">
+                        <div id="mapContainerUpdate" style="height: 500px; width: 100%; border-radius: 8px;"></div>
+                      </div>
+
+                  </VCol>
+
+
+                  <VCol cols="12" sm="6" md="4">
+                    <AppTextField
+                      v-model="nameUpdate"
+                      label="Name"
+                      placeholder="Name"
+                      :rules = "[requiredValidator, nameValidator]"
+                    />
+                  </VCol>
+                  <VCol cols="12" sm="6" md="4">
+                    <AppSelect
+                      v-model="typeUpdate"
+                      label="Type"
+                      placeholder="Type"
+                      :rules = "[requiredValidator]"
+                      :items = "poiTypes"
+
+                    />
+                  </VCol>
+                  <VCol cols="12" sm="6" md="4">
+                    <AppSelect
+                      v-model="groupUpdate"
+                      label="Group"
+                      placeholder="Group"
+                      :rules = "[requiredValidator]"
+                      :items="poiGroups"
+                    />
+                  </VCol>
+
+
+                  <VCol cols="12">
+                    <div v-for="(field, index) in payloadFieldsUpdate" :key="index" class="d-flex align-center mb-2 gap-2">
+                      <AppTextField
+                        v-model="field.key"
+                        label="Key"
+                        placeholder="Enter key"
+                        dense
+                      />
+                      <AppTextField
+                        v-model="field.value"
+                        label="Value"
+                        placeholder="Enter value"
+                        dense
+                      />
+                    <IconBtn @click="addPayloadFieldUpdate" class="mt-5" > 
+                      <VIcon icon="tabler-hexagon-plus" />
+                    </IconBtn>
+                      <IconBtn  @click="removePayloadFieldUpdate(index)" class="mt-5">
+                        <VIcon icon="tabler-hexagon-minus" />
+                      </IconBtn>
+                    </div>
+                  </VCol>
+
+                </VRow>
+              </VForm>
+            </VCardText>
+
+            <VCardText class="d-flex justify-end flex-wrap gap-3">
+              <VBtn
+                variant="tonal"
+                color="secondary"
+                @click="isPoiDrawer = false"
+              >
+                Close
+              </VBtn>
+              <VBtn @click="submitUpdatePoi">
+                Update
+              </VBtn>
+            </VCardText>
+          </VCard>
+        
+      </VDialog>
+
+
+
       <!-- 👉 Add new POI-->
 
       <VDialog persistent v-model="isAddPoiDrawer"
@@ -1378,7 +1570,7 @@ const getAddress = async (lat:number, lon:number) => {
 
 
                       <!-- edit user role -->
-          <IconBtn @click="openVehicleDrawer(item.id)">
+          <IconBtn @click="openPoiDrawer(item.id)">
             <VIcon icon="tabler-edit" />
           </IconBtn>
 
