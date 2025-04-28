@@ -317,10 +317,10 @@ const updatePoi = async() => {
   }
 
   if (longitudeUpdate.value !== poi.value.longitude) {
-  poiData.longitude = longitudeUpdate.value;
+    poiData.longitude = parseFloat(longitudeUpdate.value.toFixed(8));
   }
   if (latitudeUpdate.value !== poi.value.latitude) {
-  poiData.latitude = latitudeUpdate.value;
+    poiData.latitude = parseFloat(latitudeUpdate.value.toFixed(8));
   }
 
   if (addressUpdate.value !== poi.value.address) {
@@ -410,8 +410,8 @@ const savePoi = async() => {
       groupId: group.value ?? 1,
       typeId: type.value,
       address: address.value,
-      longitude: longitude.value,
-      latitude: latitude.value,
+      longitude: parseFloat(longitude.value.toFixed(8)),
+      latitude: parseFloat(latitude.value.toFixed(8)),
       ...(Object.keys(payload).length ? { payload } : {}), // ✅ conditionally add payload
     }
 
